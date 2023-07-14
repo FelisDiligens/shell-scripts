@@ -1,0 +1,210 @@
+#!/bin/bash
+
+# apt-yay
+# -------
+# Simple yay wrapper for apt users
+#
+# To "install" this script:
+# sudo cp apt-yay /usr/local/bin
+# sudo chmod +x /usr/local/bin/apt-yay
+# (you can also rename this script to any name you like)
+
+# Sources:
+# https://wiki.archlinux.org/title/pacman
+# https://github.com/Jguer/yay
+# https://gitlab.archlinux.org/pacman/pacman-contrib
+# https://github.com/archlinux-downgrade/downgrade
+
+# Colors
+# https://stackoverflow.com/a/5947802
+RED='\033[0;31m'    # Used for errors
+YELLOW='\033[1;33m' # Used for warnings
+CYAN='\033[0;36m'   # Used to highlight commands
+RESET='\033[0m'     # Resets text color
+
+# Name of the script file, e.g. "apt-yay"
+SCRIPTNAME=$(basename "$0")
+
+# Check if pacman command exists
+if ! [ -x "$(command -v pacman)" ]; then
+    echo -e "${RED}Error: pacman is not installed.${RESET}"
+    echo "Are you using Arch Linux?"
+    exit 1
+fi
+
+# Check if yay command exists
+if ! [ -x "$(command -v yay)" ]; then
+    echo -e "${RED}Error: yay is not installed.${RESET}"
+    # Might need to run `pacman -Sy` (or `apt-yay update`) before:
+    echo -e "Run (Arch)    $ ${CYAN}sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si${RESET}"
+    echo -e "Run (Manjaro) $ ${CYAN}sudo pacman -S --needed git base-devel yay${RESET}"
+    exit 1
+fi
+
+# Show warning if we run as root
+if [ "$EUID" -eq 0 ]; then
+    echo -e "${YELLOW}Avoid running apt-yay as root/sudo.${RESET}"
+    echo "It will ask for your password if necessary."
+fi
+
+
+# INSTALL
+if [ -n "$1" ] && [ "$1" = "install" ]; then
+    if [ -n "$2" ]; then
+        yay -S "${@:2}"
+    else
+        echo "No package given."
+        echo -e "Usage: ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
+    fi
+# REMOVE
+elif [ -n "$1" ] && { [ "$1" = "remove" ] || [ "$1" = "uninstall" ]; }; then
+    if [ -n "$2" ]; then
+        yay -Rs "${@:2}"
+    else
+        echo "No package given."
+        echo -e "Usage: ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
+    fi
+# PURGE
+elif [ -n "$1" ] && [ "$1" = "purge" ]; then
+    if [ -n "$2" ]; then
+        yay -Rns "${@:2}"
+    else
+        echo "No package given."
+        echo -e "Usage: ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
+    fi
+# DOWNGRADE
+elif [ -n "$1" ] && [ "$1" = "downgrade" ]; then
+    if [ -n "$2" ]; then
+        if [ -x "$(command -v downgrade)" ]; then
+            downgrade "${@:2}"
+        else
+            echo -e "${YELLOW}Please install downgrade from the AUR${RESET}. See: https://aur.archlinux.org/packages/downgrade"
+            echo -e "Run $ ${CYAN}yay -S downgrade${RESET} or $ ${CYAN}$SCRIPTNAME install downgrade${RESET}"
+        fi
+    else
+        echo "No package given."
+        echo -e "Usage: ${CYAN}$SCRIPTNAME downgrade PACKAGE(S)${RESET}"
+    fi
+# SEARCH
+elif [ -n "$1" ] && [ "$1" = "search" ]; then
+    if [ -n "$2" ]; then
+        yay -Ss "${@:2}"
+        # pacsearch "${@:2}"
+        # yay -Qs "${@:2}"
+        # yay -Ss "${@:2}"
+    else
+        echo "No pattern given."
+        echo -e "Usage: ${CYAN}$SCRIPTNAME search PATTERN${RESET}"
+    fi
+# SHOW
+elif [ -n "$1" ] && { [ "$1" = "show" ] || [ "$1" = "info" ]; }; then
+    if [ -n "$2" ]; then
+        yay -Si "${@:2}"
+    else
+        echo "No package given."
+        echo -e "Usage: ${CYAN}$SCRIPTNAME show PACKAGE${RESET}"
+    fi
+# UPDATE
+elif [ -n "$1" ] && [ "$1" = "update" ]; then
+    if [ -n "$2" ]; then
+        if [ "$2" = "--force" ] || [ "$2" = "-f" ]; then
+            yay -Syy
+        else
+            echo "Unknown argument: $2"
+            echo -e "Usage: ${CYAN}$SCRIPTNAME update [--force|-f]${RESET}"
+        fi
+    else
+        yay -Sy
+    fi
+# UPGRADE
+elif [ -n "$1" ] && [ "$1" = "upgrade" ]; then
+    if [ -n "$2" ]; then
+        echo -e "${YELLOW}Warning: Making a partial upgrade might break your system!${RESET}"
+        echo -e "${YELLOW}It is recommended to use ${CYAN}$SCRIPTNAME install PACKAGE(S)${YELLOW} instead.${RESET}"
+        read -p "Do you want to continue anyways? [y|N] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            yay -Sy "${@:2}"
+        else
+            echo "Abort."
+        fi
+    else
+        yay
+        # yay -Syu # Update all
+        # yay -Sua # Update AUR only
+    fi
+# LIST
+elif [ -n "$1" ] && [ "$1" = "list" ]; then
+    if [ -n "$2" ]; then
+        if [ "$2" = "--upgradable" ]; then
+            if [ -x "$(command -v checkupdates)" ]; then
+                checkupdates
+            else
+                echo -e "${YELLOW}Please install pacman-contrib to use checkupdates${RESET}"
+                echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
+            fi
+        elif [ "$2" = "--installed" ]; then
+            # paclist REPO
+            yay -Qe
+        else
+            echo "Unknown argument: $2"
+            echo -e "Usage: ${CYAN}$SCRIPTNAME list [--upgradable|--installed]${RESET}"
+        fi
+    else
+        echo "Not implemented" # TODO
+    fi
+# DEPTREE
+elif [ -n "$1" ] && { [ "$1" = "deplist" ] || [ "$1" = "deptree" ]; }; then
+    if [ -x "$(command -v pactree)" ]; then
+        pactree "${@:2}"
+    else
+        echo -e "${YELLOW}Please install pacman-contrib to use pactree${RESET}"
+        echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
+    fi
+# AUTOREMOVE
+elif [ -n "$1" ] && [ "$1" = "autoremove" ]; then
+    yay -Yc # Remove unneeded dependencies
+    if [ $(pacman -Qdtq > /dev/null) ]; then
+        sudo pacman -Rns $(pacman -Qdtq) # Remove orphans
+    fi
+# CLEAN
+elif [ -n "$1" ] && [ "$1" = "clean" ]; then
+    sudo pacman -Scc # Clean cache
+    if [ -x "$(command -v paccache)" ]; then
+        paccache -r # Clean-up old pacman pkg
+    fi
+# HELP
+elif [ -z "$1" ] || [ "$1" = "help" ]; then
+    echo "Simple yay wrapper for apt users"
+    echo ""
+    echo -e "Install:           ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
+    echo -e "Remove:            ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
+    echo -e "Purge:             ${CYAN}$SCRIPTNAME purge PACKAGE(S)${RESET}"
+    echo    " → 'purge' additionally removes configuration files. Both 'remove' and 'purge' also remove unused dependencies."
+    echo -e "Downgrade:         ${CYAN}$SCRIPTNAME downgrade PACKAGE(S)${RESET}"
+    echo -e "Search:            ${CYAN}$SCRIPTNAME search PATTERN${RESET}"
+    echo -e "Show info:         ${CYAN}$SCRIPTNAME show PACKAGE${RESET}"
+    echo -e "Update db:         ${CYAN}$SCRIPTNAME update [--force|-f]${RESET}"
+    echo -e "Upgrade:           ${CYAN}$SCRIPTNAME upgrade [PACKAGE(S)]${RESET}"
+    echo -e "List installed:    ${CYAN}$SCRIPTNAME list --installed${RESET}"
+    echo -e "List outdated:     ${CYAN}$SCRIPTNAME list --upgradable${RESET}"
+    echo -e "Remove unused:     ${CYAN}$SCRIPTNAME autoremove${RESET}"
+    echo -e "Clean cache:       ${CYAN}$SCRIPTNAME clean${RESET}"
+    echo    " → Cleaning the cache might make it impossible/more difficult to downgrade packages."
+    echo -e "Show dependencies: ${CYAN}$SCRIPTNAME deptree PACKAGE${RESET}"
+    echo -e "Show help:         ${CYAN}$SCRIPTNAME [help]${RESET}"
+    echo ""
+    echo ""
+    echo "External dependencies:"
+    echo ""
+    echo -e "${CYAN}$SCRIPTNAME list --upgradable${RESET} uses ${CYAN}checkupdates${RESET} from the ${CYAN}pacman-contrib${RESET} package."
+    echo -e " → See $ ${CYAN}man checkupdates${RESET}"
+    echo -e "${CYAN}$SCRIPTNAME deptree${RESET} uses ${CYAN}pactree${RESET} from the ${CYAN}pacman-contrib${RESET} package."
+    echo -e " → See $ ${CYAN}man pactree${RESET}"
+    echo -e "${CYAN}$SCRIPTNAME downgrade${RESET} uses the ${CYAN}downgrade${RESET} AUR package."
+    echo -e " → See $ ${CYAN}man downgrade${RESET}"
+# UNKNOWN
+else
+    echo "Unknown command: $1"
+    echo ""
+fi

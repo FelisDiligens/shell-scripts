@@ -1,0 +1,6 @@
+Windows Registry Editor Version 5.00
+
+; http://www.tenforums.com/tutorials/4189-fast-startup-turn-off-windows-10-a.html 
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Power]
+"HiberbootEnabled"=dword:00000000

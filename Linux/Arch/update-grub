@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Place this file in /usr/sbin/
+# sudo cp -v ./update-grub /usr/sbin/update-grub
+# sudo chmod +x /usr/sbin/update-grub
+# and then run
+# sudo update-grub
+
+# https://wiki.archlinux.org/title/GRUB#Generate_the_main_configuration_file
+
+if [ "$EUID" -ne 0 ]
+    then echo "Please run as root"
+    exit -1
+fi
+
+grub_cfg_path="/boot/grub/grub.cfg"
+
+read -p "Update $grub_cfg_path [y/N]? " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    grub-mkconfig -o $grub_cfg_path && echo "Done."
+else
+    echo "Abort."
+fi

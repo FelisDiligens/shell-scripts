@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# Place this file in /usr/sbin/
+# sudo cp -v ./update-grub /usr/sbin/update-grub
+# sudo chmod +x /usr/sbin/update-grub
+# and then run
+# sudo update-grub
+
+# See https://fedoraproject.org/wiki/GRUB_2
+
+# -------------------------------------------
+
+# Some digging into the various cfg files:
+
+# On Fedora 38:
+# /etc/grub2.cfg     -> ../boot/grub2/grub.cfg
+# /etc/grub2-efi.cfg -> ../boot/grub2/grub.cfg
+
+# On Fedora 31:
+# /etc/grub2-efi.cfg -> ../boot/efi/EFI/fedora/grub.cfg
+
+# Explanation:
+# /etc/grub2.cfg and /etc/grub2-efi.cfg are symlinks to /boot/grub2/grub.cfg
+# /boot/efi/EFI/fedora/grub.cfg is a stub file that points to /boot/grub2/grub.cfg and shouldn't be modified.
+# So, one should modify /boot/grub2/grub.cfg and leave the rest alone.
+
+# Changes since Fedora 34:
+# It seems as though prior to Fedora 34, one had to modify /boot/efi/EFI/fedora/grub.cfg when using a EFI system.
+# That has been changed since, but lots of resources still mention to run grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
+
+# -------------------------------------------
+
+if [ "$EUID" -ne 0 ]
+    then echo "Please run as root"
+    exit -1
+fi
+
+if [ ! -f /etc/fedora-release ]; then
+    echo "You are not running Fedora."
+    exit -1
+fi
+
+fedora_version="$(cat /etc/fedora-release | sed s/[^0-9]//g)"
+grub_cfg_path="/boot/grub2/grub.cfg"
+
+if [ "$fedora_version" -gt "33" ]; then
+    echo "Detected: Fedora $fedora_version"
+    grub_cfg_path="/boot/grub2/grub.cfg"
+else
+    if [ -d /sys/firmware/efi ]; then
+        # UEFI detected
+        echo "Detected: Fedora $fedora_version on UEFI"
+        grub_cfg_path="/boot/efi/EFI/fedora/grub.cfg"
+    else
+        # BIOS detected
+        echo "Detected: Fedora $fedora_version on Legacy"
+        grub_cfg_path="/boot/grub2/grub.cfg"
+    fi
+fi
+
+read -p "Update $grub_cfg_path [y/N]? " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    grub2-mkconfig -o $grub_cfg_path && echo "Done."
+else
+    echo "Abort."
+fi

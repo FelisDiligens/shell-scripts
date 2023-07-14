@@ -1,0 +1,44 @@
+Windows Registry Editor Version 5.00
+
+; Please copy terminal.ico to %LOCALAPPDATA%\Microsoft\WindowsApps\Microsoft.WindowsTerminal_8wekyb3d8bbwe
+
+; From:
+; https://superuser.com/a/1202148
+; https://blogs.msdn.microsoft.com/andrew_richards/2017/03/01/enhancing-the-open-command-prompt-here-shift-right-click-context-menu-experience/
+
+; Windows Terminal
+
+[HKEY_CLASSES_ROOT\Directory\shell\03MenuWt]
+"MUIVerb"="Öffnen in Windows Terminal"
+"Icon"="%LOCALAPPDATA%\\Microsoft\\WindowsApps\\Microsoft.WindowsTerminal_8wekyb3d8bbwe\\terminal.ico"
+"ExtendedSubCommandsKey"="Directory\\ContextMenus\\MenuWt"
+"SeparatorAfter"=""
+
+[HKEY_CLASSES_ROOT\Directory\background\shell\03MenuWt]
+"MUIVerb"="Öffnen in Windows Terminal"
+"Icon"="%LOCALAPPDATA%\\Microsoft\\WindowsApps\\Microsoft.WindowsTerminal_8wekyb3d8bbwe\\terminal.ico"
+"ExtendedSubCommandsKey"="Directory\\ContextMenus\\MenuWt"
+"SeparatorAfter"=""
+
+[HKEY_CLASSES_ROOT\Directory\ContextMenus\MenuWt\shell\open]
+"MUIVerb"="mit Nutzer-Rechten"
+"Icon"="%LOCALAPPDATA%\\Microsoft\\WindowsApps\\Microsoft.WindowsTerminal_8wekyb3d8bbwe\\terminal.ico"
+
+[HKEY_CLASSES_ROOT\Directory\ContextMenus\MenuWt\shell\open\command]
+@="wt.exe -d \"%V\""
+
+[HKEY_CLASSES_ROOT\Directory\ContextMenus\MenuWt\shell\runas]
+"MUIVerb"="mit Administrator-Rechten"
+"Icon"="%LOCALAPPDATA%\\Microsoft\\WindowsApps\\Microsoft.WindowsTerminal_8wekyb3d8bbwe\\terminal.ico"
+"HasLUAShield"=""
+
+[HKEY_CLASSES_ROOT\Directory\ContextMenus\MenuWt\shell\runas\command]
+@="wt.exe -d \"%V\""
+
+; Ensure OS Entries are on the Extended Menu (Shift-Right Click)
+
+[HKEY_CLASSES_ROOT\Directory\shell\wt]
+"Extended"=""
+
+[HKEY_CLASSES_ROOT\Directory\background\shell\wt]
+"Extended"=""
