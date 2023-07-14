@@ -10,7 +10,7 @@
 
 if [ "$EUID" -ne 0 ]
     then echo "Please run as root"
-    exit -1
+    exit 1
 fi
 
 grub_cfg_path="/boot/grub/grub.cfg"

@@ -164,7 +164,7 @@ elif [ -n "$1" ] && { [ "$1" = "deplist" ] || [ "$1" = "deptree" ]; }; then
 # AUTOREMOVE
 elif [ -n "$1" ] && [ "$1" = "autoremove" ]; then
     yay -Yc # Remove unneeded dependencies
-    if [ $(pacman -Qdtq > /dev/null) ]; then
+    if pacman -Qdtq > /dev/null; then
         sudo pacman -Rns $(pacman -Qdtq) # Remove orphans
     fi
 # CLEAN
