@@ -2,7 +2,7 @@
 
 # apt-yay
 # -------
-# Simple yay wrapper for apt users
+# Simple yay wrapper inspired by apt and dnf
 #
 # To "install" this script:
 # sudo cp apt-yay /usr/local/bin
@@ -26,14 +26,14 @@ RESET='\033[0m'     # Resets text color
 SCRIPTNAME=$(basename "$0")
 
 # Check if pacman command exists
-if ! [ -x "$(command -v pacman)" ]; then
+if ! [ -x "$(command -v pacman)" ] && [ "$1" != "help" ]; then
     echo -e "${RED}Error: pacman is not installed.${RESET}"
     echo "Are you using Arch Linux?"
     exit 1
 fi
 
 # Check if yay command exists
-if ! [ -x "$(command -v yay)" ]; then
+if ! [ -x "$(command -v yay)" ] && [ "$1" != "help" ]; then
     echo -e "${RED}Error: yay is not installed.${RESET}"
     # Might need to run `pacman -Sy` (or `apt-yay update`) before:
     echo -e "Run (Arch)    $ ${CYAN}sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si${RESET}"
@@ -138,7 +138,7 @@ elif [ -n "$1" ] && [ "$1" = "list" ]; then
     if [ -n "$2" ]; then
         if [ "$2" = "--upgradable" ]; then
             if [ -x "$(command -v checkupdates)" ]; then
-                checkupdates
+                checkupdates "${@:3}"
             else
                 echo -e "${YELLOW}Please install pacman-contrib to use checkupdates${RESET}"
                 echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
@@ -153,6 +153,14 @@ elif [ -n "$1" ] && [ "$1" = "list" ]; then
     else
         echo "Not implemented" # TODO
     fi
+# OUTDATED
+elif [ -n "$1" ] && [ "$1" = "outdated" ]; then
+    if [ -x "$(command -v checkupdates)" ]; then
+        checkupdates "${@:2}"
+    else
+        echo -e "${YELLOW}Please install pacman-contrib to use checkupdates${RESET}"
+        echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
+    fi
 # DEPTREE
 elif [ -n "$1" ] && { [ "$1" = "deplist" ] || [ "$1" = "deptree" ]; }; then
     if [ -x "$(command -v pactree)" ]; then
@@ -160,6 +168,14 @@ elif [ -n "$1" ] && { [ "$1" = "deplist" ] || [ "$1" = "deptree" ]; }; then
     else
         echo -e "${YELLOW}Please install pacman-contrib to use pactree${RESET}"
         echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
+    fi
+# PROVIDES
+elif [ -n "$1" ] && [ "$1" = "provides" ]; then
+    if [ -n "$2" ]; then
+        pacman -Qo "${@:2}"
+    else
+        echo "No package given."
+        echo -e "Usage: ${CYAN}$SCRIPTNAME provides PROGRAM${RESET}"
     fi
 # AUTOREMOVE
 elif [ -n "$1" ] && [ "$1" = "autoremove" ]; then
@@ -175,7 +191,7 @@ elif [ -n "$1" ] && [ "$1" = "clean" ]; then
     fi
 # HELP
 elif [ -z "$1" ] || [ "$1" = "help" ]; then
-    echo "Simple yay wrapper for apt users"
+    echo "Simple yay wrapper inspired by apt and dnf"
     echo ""
     echo -e "Install:           ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
     echo -e "Remove:            ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
@@ -188,10 +204,12 @@ elif [ -z "$1" ] || [ "$1" = "help" ]; then
     echo -e "Upgrade:           ${CYAN}$SCRIPTNAME upgrade [PACKAGE(S)]${RESET}"
     echo -e "List installed:    ${CYAN}$SCRIPTNAME list --installed${RESET}"
     echo -e "List outdated:     ${CYAN}$SCRIPTNAME list --upgradable${RESET}"
+    echo -e "                   ${CYAN}$SCRIPTNAME outdated${RESET}"
     echo -e "Remove unused:     ${CYAN}$SCRIPTNAME autoremove${RESET}"
     echo -e "Clean cache:       ${CYAN}$SCRIPTNAME clean${RESET}"
     echo    " → Cleaning the cache might make it impossible/more difficult to downgrade packages."
-    echo -e "Show dependencies: ${CYAN}$SCRIPTNAME deptree PACKAGE${RESET}"
+    echo -e "Which package:     ${CYAN}$SCRIPTNAME provides PROGRAM${RESET}"
+    echo -e "Show dependencies: ${CYAN}$SCRIPTNAME deptree [--reverse] PACKAGE${RESET}"
     echo -e "Show help:         ${CYAN}$SCRIPTNAME [help]${RESET}"
     echo ""
     echo ""
