@@ -18,7 +18,7 @@ grub_cfg_path="/boot/grub/grub.cfg"
 read -p "Update $grub_cfg_path [y/N]? " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    grub-mkconfig -o $grub_cfg_path && echo "Done."
+    grub-mkconfig -o $grub_cfg_path "$@" && echo "Done."
 else
     echo "Abort."
 fi
