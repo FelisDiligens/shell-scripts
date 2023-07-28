@@ -16,7 +16,6 @@ bootloader_id="" # You can get the bootloader id by running "efibootmgr", or lea
 # Sources:
 # https://wiki.archlinux.org/title/GRUB#Installation
 # https://wiki.archlinux.org/title/GRUB#Installation_2
-# https://wiki.archlinux.org/title/GRUB#Generate_the_main_configuration_file
 # https://discovery.endeavouros.com/system-rescue/repair-a-non-booting-grub/2021/03/
 
 
@@ -54,6 +53,18 @@ if [ -z "$mbr_block_device" ]; then
     # Crude auto-detect:
     # mbr_block_device="$(mount | grep "on / " | sed -E "s/(\/dev\/(sd[a-z]|nvme[0-9]n[0-9])).*/\1/")"
     mbr_block_device="/dev/$(lsblk | grep -E "part /\$" | grep -o -E "(sd[a-z]|nvme[0-9]n[0-9])")"
+fi
+
+# Check if ESP mount point exists:
+if [ -d "/sys/firmware/efi" ] && ! [ -d "$esp_mount_point" ]; then
+    echo "Path doesn't exist: $esp_mount_point"
+    read -p "Continue anyways [y/N]? " -n 1 -r
+    echo
+    if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "Abort."
+        exit 1
+    fi
+    echo
 fi
 
 # Check if the bootloader_id is in output of efibootmgr:
