@@ -1,24 +1,101 @@
 #!/bin/bash
 
-# Place this file in /usr/sbin/
+# Edit the variables below first to match your system:
+
+esp_mount_point="/boot/efi" # The EFI System Partition mount point if you use GPT/UEFI boot. Default is "/boot/efi".
+mbr_block_device="/dev/sdX" # The block device (not partition!) used if you use MBR/Legacy boot.
+grub_cfg_path="/boot/grub/grub.cfg" # The path where the generated GRUB configuration file is stored. Default is "/boot/grub/grub.cfg".
+bootloader_id="$(grep -e "^NAME=" "/etc/os-release" | sed 's/NAME=\"\(.*\)\"/\1/')" # Default is "GRUB", but we'll use the NAME from os-release
+# You can get the bootloader id by running "efibootmgr"
+
+# Then place this file in /usr/sbin/
 # sudo cp -v ./update-grub /usr/sbin/update-grub
 # sudo chmod +x /usr/sbin/update-grub
 # and then run
 # sudo update-grub
 
+# Sources:
+# https://wiki.archlinux.org/title/GRUB#Installation
+# https://wiki.archlinux.org/title/GRUB#Installation_2
 # https://wiki.archlinux.org/title/GRUB#Generate_the_main_configuration_file
+# https://discovery.endeavouros.com/system-rescue/repair-a-non-booting-grub/2021/03/
 
-if [ "$EUID" -ne 0 ]
-    then echo "Please run as root"
+
+# Check if we're running as root:
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run as root"
     exit 1
 fi
 
-grub_cfg_path="/boot/grub/grub.cfg"
+# Check if the bootloader_id is in output of efibootmgr:
+echo "Bootloader ID: $bootloader_id"
+if [ -d "/sys/firmware/efi" ] && [ -x "$(command -v efibootmgr)" ]; then
+    bootloader_ids="$(efibootmgr | grep -E "Boot[0-9]{4}\*" | sed -E "s/Boot[0-9]{4}\*\s?//" | sed "s/HD(.*//" | sort | uniq)"
+    if echo "$bootloader_ids" | ! grep -q "$bootloader_id"; then
+        echo "Bootloader ID \"$bootloader_id\" not found in the output of efibootmgr:"
+        echo "$bootloader_ids" | sed -E "s/^(.*)/- \1/"
+        echo
+        echo "This may result in a duplicate bootloader entry."
+        read -p "Continue anyways [y/N]? " -n 1 -r
+        echo
+        if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
+    fi
+fi
 
+# First, determine boot configuration and reinstall GRUB:
+echo "Running grub-install is only necessary if grub has been updated recently."
+echo "But there's no harm in running it anyways. (As long as the configuration is correct!)"
+echo
+if [ -d "/sys/firmware/efi" ]; then
+    # There are various ways to check if Secure Boot is enabled... which is best?
+    # dmesg | grep -i -E "secure\s?boot" | grep -q "enabled"
+    # bootctl status &>2 | grep -i "secure boot" | grep -q "enabled"
+    # mokutil --sb-state | grep -q "SecureBoot enabled"
+    if [ -x "$(command -v mokutil)" ] && mokutil --sb-state | grep "SecureBoot enabled" -q; then
+        echo "Detected EFI"
+        echo "ESP mount point: $esp_mount_point"
+        echo "Secure Boot enabled"
+        echo
+        read -p "Reinstall GRUB [y/N]? " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            grub-install --target=x86_64-efi --efi-directory="$esp_mount_point" --bootloader-id="$bootloader_id" -modules="normal test efi_gop efi_uga search echo linux all_video gfxmenu gfxterm_background gfxterm_menu gfxterm loadenv configfile tpm"
+        else
+            echo "Skipped."
+        fi
+    else
+        echo "Detected EFI"
+        echo "ESP mount point: $esp_mount_point"
+        echo "Secure Boot disabled"
+        echo
+        read -p "Reinstall GRUB [y/N]? " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            grub-install --target=x86_64-efi --efi-directory="$esp_mount_point" --bootloader-id="$bootloader_id"
+        else
+            echo "Skipped."
+        fi
+    fi
+else
+    echo "Detected legacy boot."
+    echo "Block device: $mbr_block_device"
+    echo
+    read -p "Reinstall GRUB [y/N]? " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        grub-install --target=i386-pc "$mbr_block_device" && echo "Done."
+    else
+        echo "Skipped."
+    fi
+fi
+
+# Next, update GRUB configuration:
 read -p "Update $grub_cfg_path [y/N]? " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     grub-mkconfig -o $grub_cfg_path "$@" && echo "Done."
 else
-    echo "Abort."
+    echo "Skipped."
 fi
