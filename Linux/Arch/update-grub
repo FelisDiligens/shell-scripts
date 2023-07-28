@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Edit the variables below first to match your system:
+# (in most circumstances, you probably don't have to change them at all)
 
 esp_mount_point="/boot/efi" # The EFI System Partition mount point if you use GPT/UEFI boot. Default is "/boot/efi".
-mbr_block_device="/dev/sdX" # The block device (not partition!) used if you use MBR/Legacy boot.
+mbr_block_device="" # The block device ("/dev/sdX", not partition!) used if you use MBR/Legacy boot. Leave blank for autodetect.
 grub_cfg_path="/boot/grub/grub.cfg" # The path where the generated GRUB configuration file is stored. Default is "/boot/grub/grub.cfg".
-bootloader_id="$(grep -e "^NAME=" "/etc/os-release" | sed 's/NAME=\"\(.*\)\"/\1/')" # Default is "GRUB", but we'll use the NAME from os-release
-# You can get the bootloader id by running "efibootmgr"
+bootloader_id="" # You can get the bootloader id by running "efibootmgr", or leave blank for autodetect. Default is "GRUB".
 
 # Then place this file in /usr/sbin/
 # sudo cp -v ./update-grub /usr/sbin/update-grub
@@ -27,11 +27,40 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# Ensure bootloader_id is set:
+if [ -z "$bootloader_id" ]; then
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        case "$ID" in
+            arch|archarm)
+                bootloader_id="Arch"
+            ;;
+            endeavouros)
+                bootloader_id="EndeavourOS"
+            ;;
+            manjaro|manjaro-arm)
+                bootloader_id="Manjaro"
+            ;;
+            *)
+                bootloader_id="$NAME"
+            ;;
+        esac
+    else
+        bootloader_id="GRUB"
+    fi
+fi
+
+# Ensure mbr_block_device is set:
+if [ -z "$mbr_block_device" ]; then
+    # Crude auto-detect:
+    # mbr_block_device="$(mount | grep "on / " | sed -E "s/(\/dev\/(sd[a-z]|nvme[0-9]n[0-9])).*/\1/")"
+    mbr_block_device="/dev/$(lsblk | grep -E "part /\$" | grep -o -E "(sd[a-z]|nvme[0-9]n[0-9])")"
+fi
+
 # Check if the bootloader_id is in output of efibootmgr:
-echo "Bootloader ID: $bootloader_id"
 if [ -d "/sys/firmware/efi" ] && [ -x "$(command -v efibootmgr)" ]; then
     bootloader_ids="$(efibootmgr | grep -E "Boot[0-9]{4}\*" | sed -E "s/Boot[0-9]{4}\*\s?//" | sed "s/HD(.*//" | sort | uniq)"
-    if echo "$bootloader_ids" | ! grep -q "$bootloader_id"; then
+    if ! echo "$bootloader_ids" | grep -q "$bootloader_id"; then
         echo "Bootloader ID \"$bootloader_id\" not found in the output of efibootmgr:"
         echo "$bootloader_ids" | sed -E "s/^(.*)/- \1/"
         echo
@@ -39,8 +68,10 @@ if [ -d "/sys/firmware/efi" ] && [ -x "$(command -v efibootmgr)" ]; then
         read -p "Continue anyways [y/N]? " -n 1 -r
         echo
         if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "Abort."
             exit 1
         fi
+        echo
     fi
 fi
 
@@ -57,6 +88,7 @@ if [ -d "/sys/firmware/efi" ]; then
         echo "Detected EFI"
         echo "ESP mount point: $esp_mount_point"
         echo "Secure Boot enabled"
+        echo "Bootloader ID: $bootloader_id"
         echo
         read -p "Reinstall GRUB [y/N]? " -n 1 -r
         echo
@@ -69,6 +101,7 @@ if [ -d "/sys/firmware/efi" ]; then
         echo "Detected EFI"
         echo "ESP mount point: $esp_mount_point"
         echo "Secure Boot disabled"
+        echo "Bootloader ID: $bootloader_id"
         echo
         read -p "Reinstall GRUB [y/N]? " -n 1 -r
         echo
@@ -81,6 +114,7 @@ if [ -d "/sys/firmware/efi" ]; then
 else
     echo "Detected legacy boot."
     echo "Block device: $mbr_block_device"
+    echo "Bootloader ID: $bootloader_id"
     echo
     read -p "Reinstall GRUB [y/N]? " -n 1 -r
     echo
@@ -92,7 +126,7 @@ else
 fi
 
 # Next, update GRUB configuration:
-read -p "Update $grub_cfg_path [y/N]? " -n 1 -r
+read -p "Update GRUB configuration at $grub_cfg_path [y/N]? " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     grub-mkconfig -o $grub_cfg_path "$@" && echo "Done."
