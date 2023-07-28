@@ -89,7 +89,7 @@ fi
 if [ -d "/sys/firmware/efi" ]; then
     # There are various ways to check if Secure Boot is enabled... which is best?
     # dmesg | grep -i -E "secure\s?boot" | grep -q "enabled"
-    # bootctl status &>2 | grep -i "secure boot" | grep -q "enabled"
+    # bootctl status &>/dev/null | grep -i "secure boot" | grep -q "enabled"
     # mokutil --sb-state | grep -q "SecureBoot enabled"
     if [ -x "$(command -v mokutil)" ] && mokutil --sb-state | grep "SecureBoot enabled" -q; then
         echo "Detected EFI with Secure Boot"
