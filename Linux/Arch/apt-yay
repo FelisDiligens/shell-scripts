@@ -31,52 +31,90 @@ RESET='\033[0m'         # Resets text color
 # Name of the script file, e.g. "apt-yay"
 SCRIPTNAME=$(basename "$0")
 
+function show-message {
+    case $1 in
+        no-more-args)
+            echo "No $2 given."
+            echo -e "Usage: ${CYAN}$SCRIPTNAME $3 ${2^^}(S)${RESET}"
+        ;;
+        no-second-arg)
+            echo "No $2 given."
+            echo -e "Usage: ${CYAN}$SCRIPTNAME $3 ${2^^}${RESET}"
+        ;;
+        unknown-arg)
+            echo "Unknown argument: $2"
+            echo -e "Usage: ${CYAN}$SCRIPTNAME $3${RESET}"
+        ;;
+        downgrade-missing)
+            echo -e "${BOLDYELLOW}Please install downgrade from the AUR${RESET}. See: https://aur.archlinux.org/packages/downgrade"
+            echo -e "Run $ ${CYAN}yay -S downgrade${RESET} or $ ${CYAN}$SCRIPTNAME install downgrade${RESET}"
+        ;;
+        reflector-missing)
+            echo -e "${BOLDYELLOW}Please install reflector${RESET}"
+            echo -e "Run $ ${CYAN}yay -S reflector${RESET} or $ ${CYAN}$SCRIPTNAME install reflector${RESET}"
+        ;;
+        pacman-contrib-missing)
+            echo -e "${BOLDYELLOW}Please install pacman-contrib to use $2${RESET}"
+            echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
+        ;;
+        yay-missing)
+            echo -e "${BOLDRED}Error: yay is not installed.${RESET}"
+            # Might need to run `pacman -Sy` (or `apt-yay update`) before:
+            echo -e "Run (Arch)    $ ${CYAN}sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si${RESET}"
+            echo -e "Run (Manjaro) $ ${CYAN}sudo pacman -S --needed git base-devel yay${RESET}"
+        ;;
+        pacman-missing)
+            echo -e "${BOLDRED}Error: pacman is not installed.${RESET}"
+            echo "Are you using Arch Linux?"
+        ;;
+        root-warning)
+            echo -e "${BOLDYELLOW}Avoid running apt-yay as root/sudo.${RESET}"
+            echo "It will ask for your password if necessary."
+        ;;
+    esac
+}
+# show-message "no-more-args" "package" "install"
+# show-message "no-second-arg" "program" "provides"
+# show-message "pacman-contrib-missing" "paclist"
+# show-message "unknown-arg" "list [--upgradable|--installed]"
+
 # Check if pacman command exists
 if ! [ -x "$(command -v pacman)" ] && [ "$1" != "help" ]; then
-    echo -e "${BOLDRED}Error: pacman is not installed.${RESET}"
-    echo "Are you using Arch Linux?"
+    show-message "pacman-missing"
     exit 1
 fi
 
 # Check if yay command exists
 if ! [ -x "$(command -v yay)" ] && [ "$1" != "help" ]; then
-    echo -e "${BOLDRED}Error: yay is not installed.${RESET}"
-    # Might need to run `pacman -Sy` (or `apt-yay update`) before:
-    echo -e "Run (Arch)    $ ${CYAN}sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si${RESET}"
-    echo -e "Run (Manjaro) $ ${CYAN}sudo pacman -S --needed git base-devel yay${RESET}"
+    show-message "yay-missing"
     exit 1
 fi
 
 # Show warning if we run as root
 if [ "$EUID" -eq 0 ]; then
-    echo -e "${BOLDYELLOW}Avoid running apt-yay as root/sudo.${RESET}"
-    echo "It will ask for your password if necessary."
+    show-message "root-warning"
 fi
-
 
 # INSTALL
 if [ -n "$1" ] && { [ "$1" = "install" ] || [ "$1" = "i" ] || [ "$1" = "in" ]; }; then
     if [ -n "$2" ]; then
         yay -S "${@:2}" --needed
     else
-        echo "No package given."
-        echo -e "Usage: ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
+        show-message "no-more-args" "package" "install"
     fi
 # REMOVE
 elif [ -n "$1" ] && { [ "$1" = "remove" ] || [ "$1" = "uninstall" ] || [ "$1" = "r" ] || [ "$1" = "rm" ]; }; then
     if [ -n "$2" ]; then
         yay -Rs "${@:2}"
     else
-        echo "No package given."
-        echo -e "Usage: ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
+        show-message "no-more-args" "package" "remove"
     fi
 # PURGE
 elif [ -n "$1" ] && { [ "$1" = "purge" ] || [ "$1" = "p" ]; }; then
     if [ -n "$2" ]; then
         yay -Rns "${@:2}"
     else
-        echo "No package given."
-        echo -e "Usage: ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
+        show-message "no-more-args" "package" "purge"
     fi
 # DOWNGRADE
 elif [ -n "$1" ] && { [ "$1" = "downgrade" ] || [ "$1" = "d" ]; }; then
@@ -84,12 +122,10 @@ elif [ -n "$1" ] && { [ "$1" = "downgrade" ] || [ "$1" = "d" ]; }; then
         if [ -x "$(command -v downgrade)" ]; then
             downgrade "${@:2}"
         else
-            echo -e "${BOLDYELLOW}Please install downgrade from the AUR${RESET}. See: https://aur.archlinux.org/packages/downgrade"
-            echo -e "Run $ ${CYAN}yay -S downgrade${RESET} or $ ${CYAN}$SCRIPTNAME install downgrade${RESET}"
+            show-message "downgrade-missing"
         fi
     else
-        echo "No package given."
-        echo -e "Usage: ${CYAN}$SCRIPTNAME downgrade PACKAGE(S)${RESET}"
+        show-message "no-more-args" "package" "downgrade"
     fi
 # SEARCH
 elif [ -n "$1" ] && { [ "$1" = "search" ] || [ "$1" = "s" ] || [ "$1" = "se" ]; };  then
@@ -99,16 +135,14 @@ elif [ -n "$1" ] && { [ "$1" = "search" ] || [ "$1" = "s" ] || [ "$1" = "se" ]; 
         # yay -Qs "${@:2}"
         # yay -Ss "${@:2}"
     else
-        echo "No pattern given."
-        echo -e "Usage: ${CYAN}$SCRIPTNAME search PATTERN${RESET}"
+        show-message "no-second-arg" "pattern" "search"
     fi
 # SHOW
 elif [ -n "$1" ] && { [ "$1" = "show" ] || [ "$1" = "info" ] || [ "$1" = "S" ]; }; then
     if [ -n "$2" ]; then
         yay -Si "${@:2}"
     else
-        echo "No package given."
-        echo -e "Usage: ${CYAN}$SCRIPTNAME show PACKAGE${RESET}"
+        show-message "no-second-arg" "package" "show"
     fi
 # UPDATE
 elif [ -n "$1" ] && { [ "$1" = "update" ] || [ "$1" = "U" ] || [ "$1" = "ref" ]; }; then
@@ -116,8 +150,7 @@ elif [ -n "$1" ] && { [ "$1" = "update" ] || [ "$1" = "U" ] || [ "$1" = "ref" ];
         if [ "$2" = "--force" ] || [ "$2" = "-f" ]; then
             yay -Syy
         else
-            echo "Unknown argument: $2"
-            echo -e "Usage: ${CYAN}$SCRIPTNAME update [--force|-f]${RESET}"
+            show-message "unknown-arg" "$2" "update [--force|-f]"
         fi
     else
         yay -Sy
@@ -152,8 +185,7 @@ elif [ -n "$1" ] && { [ "$1" = "update-mirrors" ] || [ "$1" = "m" ]; }; then
         echo "Updating database"
         yay -Syy
     else
-        echo -e "${BOLDYELLOW}Please install reflector${RESET}"
-        echo -e "Run $ ${CYAN}yay -S reflector${RESET} or $ ${CYAN}$SCRIPTNAME install reflector${RESET}"
+        show-message "reflector-missing"
     fi
 # LIST
 elif [ -n "$1" ] && { [ "$1" = "list" ] || [ "$1" = "l" ]; }; then
@@ -162,8 +194,7 @@ elif [ -n "$1" ] && { [ "$1" = "list" ] || [ "$1" = "l" ]; }; then
             if [ -x "$(command -v checkupdates)" ]; then
                 checkupdates "${@:3}"
             else
-                echo -e "${BOLDYELLOW}Please install pacman-contrib to use checkupdates${RESET}"
-                echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
+                show-message "pacman-contrib-missing" "checkupdates"
             fi
         elif [ "$2" = "--installed" ] || [ "$2" = "-i" ]; then
             yay -Qe # -e, --explicit
@@ -211,12 +242,10 @@ elif [ -n "$1" ] && { [ "$1" = "list" ] || [ "$1" = "l" ]; }; then
                     done
                 fi
             else
-                echo -e "${BOLDYELLOW}Please install pacman-contrib to use paclist${RESET}"
-                echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
+                show-message "pacman-contrib-missing" "paclist"
             fi
         else
-            echo "Unknown argument: $2"
-            echo -e "Usage: ${CYAN}$SCRIPTNAME list [--upgradable|--installed]${RESET}"
+            show-message "unknown-arg" "$2" "list [--upgradable|--installed|--installed-aur|--installed-repo]"
         fi
     else
         yay -Ss ".*" # Use search and match anything.
@@ -226,16 +255,14 @@ elif [ -n "$1" ] && { [ "$1" = "deplist" ] || [ "$1" = "deptree" ]; }; then
     if [ -x "$(command -v pactree)" ]; then
         pactree "${@:2}"
     else
-        echo -e "${BOLDYELLOW}Please install pacman-contrib to use pactree${RESET}"
-        echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
+        show-message "pacman-contrib-missing" "pactree"
     fi
 # PROVIDES
 elif [ -n "$1" ] && [ "$1" = "provides" ]; then
     if [ -n "$2" ]; then
         pacman -Qo "${@:2}"
     else
-        echo "No package given."
-        echo -e "Usage: ${CYAN}$SCRIPTNAME provides PROGRAM${RESET}"
+        show-message "no-second-arg" "program" "provides"
     fi
 # AUTOREMOVE
 elif [ -n "$1" ] && { [ "$1" = "autoremove" ] || [ "$1" = "C" ]; }; then
@@ -254,6 +281,8 @@ elif [ -n "$1" ] && { [ "$1" = "clean" ] || [ "$1" = "c" ] || [ "$1" = "cc" ]; }
     # sudo pacman -Scc # Clean cache
     if [ -x "$(command -v paccache)" ]; then
         paccache -r # Clean-up old pacman pkg in "/var/cache/pacman/pkg", but keep last 3
+    else
+        show-message "pacman-contrib-missing" "paccache"
     fi
 # HELP
 elif [ -z "$1" ] || [ "$1" = "help" ]; then
