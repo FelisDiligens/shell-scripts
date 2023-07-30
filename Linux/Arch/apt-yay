@@ -162,13 +162,13 @@ elif [ -n "$1" ] && [ "$1" = "list" ]; then
             fi
         elif [ "$2" = "--installed" ]; then
             # paclist REPO
-            yay -Qe
+            yay -Qe # -e, --explicit
         else
             echo "Unknown argument: $2"
             echo -e "Usage: ${CYAN}$SCRIPTNAME list [--upgradable|--installed]${RESET}"
         fi
     else
-        echo "Not implemented" # TODO
+        yay -Ss ".*" # Use search and match anything.
     fi
 # DEPTREE
 elif [ -n "$1" ] && { [ "$1" = "deplist" ] || [ "$1" = "deptree" ]; }; then
@@ -194,6 +194,7 @@ elif [ -n "$1" ] && [ "$1" = "autoremove" ]; then
         # https://www.shellcheck.net/wiki/SC2046
         read -ra orphans < <(pacman -Qdtq)
         sudo pacman -Rns "${orphans[@]}" # Remove orphans
+        # yay -Rss $(yay -Qdtq)
     else
         echo "pacman hasn't found any orphans. Yay!"
     fi
@@ -218,6 +219,7 @@ elif [ -z "$1" ] || [ "$1" = "help" ]; then
     echo -e " → use the ${CYAN}--force${RESET} switch after changing the mirrorlist outside of $SCRIPTNAME."
     echo -e "Upgrade:           ${CYAN}$SCRIPTNAME upgrade [PACKAGE(S)]${RESET}"
     echo -e "Update mirrors:    ${CYAN}$SCRIPTNAME update-mirrors${RESET}"
+    echo -e "List all:          ${CYAN}$SCRIPTNAME list${RESET}"
     echo -e "List installed:    ${CYAN}$SCRIPTNAME list --installed${RESET}"
     echo -e "List outdated:     ${CYAN}$SCRIPTNAME list --upgradable${RESET}"
     echo -e "Remove unused:     ${CYAN}$SCRIPTNAME autoremove${RESET}"
