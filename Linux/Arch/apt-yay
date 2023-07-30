@@ -12,6 +12,7 @@
 
 # Sources:
 # https://wiki.archlinux.org/title/pacman
+# https://wiki.archlinux.org/title/Pacman/Rosetta
 # https://github.com/Jguer/yay
 # https://gitlab.archlinux.org/pacman/pacman-contrib
 # https://github.com/archlinux-downgrade/downgrade
@@ -70,6 +71,10 @@ function show-message {
         root-warning)
             echo -e "${BOLDYELLOW}Avoid running apt-yay as root/sudo.${RESET}"
             echo "It will ask for your password if necessary."
+        ;;
+        partial-upgrade-unsupported)
+            echo -e "${BOLDYELLOW}Warning: Making a partial upgrade might break your system!${RESET}"
+            echo -e "${BOLDYELLOW}It is recommended to use ${CYAN}$SCRIPTNAME $1${BOLDYELLOW} instead.${RESET}"
         ;;
     esac
 }
@@ -137,11 +142,11 @@ function list-installed {
     yay -Qe # -e is --explicit
 }
 
-function list-installed-from-aur {
+function list-installed-from-local {
     yay -Qm | while read -r line; do
-        # The following check assumes that any installed AUR package has a corresponding folder under ~/.cache/yay/
+        # The following check assumes that any installed AUR package has a corresponding folder under ~/.cache/yay/ or under ~/.cache/paru/clone/
         package_name="$(echo "$line" | cut -d' ' -f1)"
-        if [ -d "$HOME/.cache/yay/$package_name" ]; then
+        if [ -d "$HOME/.cache/yay/$package_name" ] || [ -d "$HOME/.cache/paru/clone/$package_name" ]; then
             echo -e "${BOLDBLUE}aur${RESET}/${BOLDWHITE}$package_name${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
         else
             echo -e "${BOLDYELLOW}local${RESET}/${BOLDWHITE}$package_name${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
@@ -178,25 +183,31 @@ function show-help {
     echo -e "${BOLDWHITE}Install:${RESET}           ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
     echo -e "${BOLDWHITE}Remove:${RESET}            ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
     echo -e "${BOLDWHITE}Purge:${RESET}             ${CYAN}$SCRIPTNAME purge PACKAGE(S)${RESET}"
-    echo -e " → ${CYAN}purge${RESET} additionally removes configuration files."
-    echo -e "   Both ${CYAN}remove${RESET} and ${CYAN}purge${RESET} also remove unused dependencies."
+    echo -e " → ${CYAN}purge${RESET} removes configuration files."
+    echo -e "${BOLDWHITE}Remove unused:${RESET}     ${CYAN}$SCRIPTNAME autoremove [--purge] [PACKAGE(S)]${RESET}"
+    echo -e " → ${CYAN}autoremove${RESET} removes the package and it's dependencies (if not required by other packages)."
+    echo -e "   The ${CYAN}--purge${RESET} switch additionally removes configuration files."
+    echo -e "   If run without arguments, just removes any unused packages (aka. \"orphans\")."
     echo -e "${BOLDWHITE}Downgrade:${RESET}         ${CYAN}$SCRIPTNAME downgrade PACKAGE(S)${RESET}"
     echo -e "${BOLDWHITE}Search:${RESET}            ${CYAN}$SCRIPTNAME search PATTERN${RESET}"
     echo -e "${BOLDWHITE}Show info:${RESET}         ${CYAN}$SCRIPTNAME show PACKAGE${RESET}"
     echo -e "${BOLDWHITE}Update db:${RESET}         ${CYAN}$SCRIPTNAME update [--force|-f]${RESET}"
-    echo -e " → use the ${CYAN}--force${RESET} switch after changing the mirrorlist"
-    echo    "   outside of $SCRIPTNAME."
+    echo -e " → This leads (or might lead) to partial upgrades, which can break your system."
+    echo -e "   Better use ${CYAN}upgrade${RESET} or ${CYAN}full-upgrade${RESET} instead."
     echo -e "${BOLDWHITE}Upgrade:${RESET}           ${CYAN}$SCRIPTNAME upgrade [PACKAGE(S)]${RESET}"
-    echo -e "${BOLDWHITE}Update mirrors:${RESET}    ${CYAN}$SCRIPTNAME update-mirrors${RESET}"
+    echo -e "${BOLDWHITE}Upgrade + sync db:${RESET} ${CYAN}$SCRIPTNAME full-upgrade${RESET}"
+    echo -e " → use full-upgrade after changing the mirrorlist outside of $SCRIPTNAME."
+    echo -e "${BOLDWHITE}Update mirrorlist:${RESET} ${CYAN}$SCRIPTNAME update-mirrors${RESET}"
     echo -e "${BOLDWHITE}List all:${RESET}          ${CYAN}$SCRIPTNAME list${RESET}"
-    echo -e "${BOLDWHITE}List installed:${RESET}    ${CYAN}$SCRIPTNAME list --installed${RESET} or ${CYAN}li${RESET}"
-    echo -e "   ${BOLDWHITE}...from AUR:${RESET}    ${CYAN}$SCRIPTNAME list --installed-aur${RESET} or ${CYAN}la${RESET}"
-    echo -e "    ${BOLDWHITE}...by repo:${RESET}    ${CYAN}$SCRIPTNAME list --installed-repo [REPO]${RESET} or ${CYAN}lr${RESET}"
-    echo -e "${BOLDWHITE}List outdated:${RESET}     ${CYAN}$SCRIPTNAME list --upgradable${RESET} or ${CYAN}lu${RESET}"
-    echo -e "${BOLDWHITE}Remove unused:${RESET}     ${CYAN}$SCRIPTNAME autoremove${RESET}"
+    echo -e "${BOLDWHITE}List installed:${RESET}    ${CYAN}$SCRIPTNAME list --installed${RESET}"
+    echo -e "${BOLDWHITE}...locally/aur:${RESET}    ${CYAN}$SCRIPTNAME list --installed-local${RESET}"
+    echo -e "    ${BOLDWHITE}...by repo:${RESET}    ${CYAN}$SCRIPTNAME list --installed-repo [REPO]${RESET}"
+    echo -e "${BOLDWHITE}List outdated:${RESET}     ${CYAN}$SCRIPTNAME list --upgradable${RESET}"
+    echo -e "${BOLDWHITE}List available:${RESET}    ${CYAN}$SCRIPTNAME list --available${RESET}"
+    echo -e "${BOLDWHITE}Show pacman log:${RESET}   ${CYAN}$SCRIPTNAME history${RESET}"
     echo -e "${BOLDWHITE}Clean cache:${RESET}       ${CYAN}$SCRIPTNAME clean${RESET}"
-    echo    " → Cleaning the cache might make it impossible/more difficult"
-    echo    "   to downgrade packages."
+    echo -e "${BOLDWHITE}Check/repair:${RESET}      ${CYAN}$SCRIPTNAME check${RESET}"
+    echo -e " → Verify dependencies of the complete system."
     echo -e "${BOLDWHITE}Which package:${RESET}     ${CYAN}$SCRIPTNAME provides PROGRAM${RESET}"
     echo -e "${BOLDWHITE}Show dependencies:${RESET} ${CYAN}$SCRIPTNAME deptree [--reverse] PACKAGE${RESET}"
     echo -e "${BOLDWHITE}Show help:${RESET}         ${CYAN}$SCRIPTNAME [help]${RESET}"
@@ -213,8 +224,9 @@ function show-help {
     echo ""
     echo -e "${BOLDWHITE}Shortcuts${RESET}"
     echo "---------"
-    echo -e "${BOLDCYAN}(i)${RESET}nstall, ${BOLDCYAN}(r)${RESET}emove, ${BOLDCYAN}(p)${RESET}urge, ${BOLDCYAN}(d)${RESET}owngrade, ${BOLDCYAN}(s)${RESET}earch, ${BOLDCYAN}(S)${RESET}how,"
-    echo -e "${BOLDCYAN}(U)${RESET}pdate, ${BOLDCYAN}(u)${RESET}pgrade, update-${BOLDCYAN}(m)${RESET}irrors, ${BOLDCYAN}(l)${RESET}ist, ${BOLDCYAN}(c)${RESET}lean, autoremove/auto${BOLDCYAN}(C)${RESET}lean"
+    echo -e "${BOLDCYAN}(i)${RESET}nstall, ${BOLDCYAN}(r)${RESET}emove, ${BOLDCYAN}(p)${RESET}urge, autoremove ${BOLDCYAN}(arm)${RESET}, autoremove --purge ${BOLDCYAN}(armp)${RESET}, ${BOLDCYAN}(d)${RESET}owngrade,"
+    echo -e "${BOLDCYAN}(s)${RESET}earch, ${BOLDCYAN}(S)${RESET}how, ${BOLDCYAN}(U)${RESET}pdate, ${BOLDCYAN}(u)${RESET}pgrade, update-${BOLDCYAN}(m)${RESET}irrors, ${BOLDCYAN}(c)${RESET}lean,"
+    echo -e "${BOLDCYAN}(l)${RESET}ist, list --installed ${BOLDCYAN}(li)${RESET}, list --upgradable ${BOLDCYAN}(lu)${RESET}, list --installed-local ${BOLDCYAN}(ll)${RESET}, list --installed-repo ${BOLDCYAN}(lr)${RESET}"
 }
 
 function main {
@@ -225,14 +237,64 @@ function main {
             install|i|in)
                 [ -z "$2" ] && show-message "no-more-args" "package" "install" && exit
                 yay -S "${@:2}" --needed
+                # TODO
+                # add switches: --reinstall, --download-only
+                # add command: download (pacman -Sw)
             ;;
             remove|uninstall|r|rm)
                 [ -z "$2" ] && show-message "no-more-args" "package" "remove" && exit
-                yay -Rs "${@:2}"
+                yay -R "${@:2}"
             ;;
             purge|p)
                 [ -z "$2" ] && show-message "no-more-args" "package" "purge" && exit
-                yay -Rns "${@:2}"
+                yay -Rn "${@:2}"
+                # The -n switch means to not create .pacsave files for things in the backup array.
+                # Source: https://forum.endeavouros.com/t/a-user-command-to-clean-and-update-system/29973/4
+            ;;
+            autoremove|C|arm)
+                if [ -n "$2" ]; then
+                    args="${@:3}"
+                    if [ "$2" = "--purge" ]; then
+                        [ -z "$3" ] && "no-more-args" "package" "autoremove --purge" && exit
+                        yay -Rs "${@:3}"
+                    else
+                        yay -Rns "${@:3}"
+                    fi
+                    # The -s switch removes the dependencies of a package unless those dependencies were explicitly installed or are a hard requirement of another package.
+                    # There is an important side effect of using this that you should be aware of: It can remove the optional dependencies of other packages.
+                    # Source: https://forum.endeavouros.com/t/a-user-command-to-clean-and-update-system/29973/4
+                else
+                    yay -Yc    # Remove unneeded dependencies
+                    # yay -c   # Same as yay -Yc (-Y is the default operation)
+                    # yay -Ycc # Also removes optional dependencies
+                    # yay -Sc  # Cleans cache, similar to pacman -Sc
+
+                    # paru -Scc
+                    # -Sc/-Scc only runs git clean.
+                    # Use -Scd/-Sccd to delete the clones.
+
+                    # pacman -Sc  # "remove all the cached packages that are not currently installed, and the unused sync database"
+                    # pacman -Scc # "remove all files from the cache, this is the most aggressive approach and will leave nothing in the cache directory"
+
+                    if pacman -Qdtq > /dev/null; then
+                        # https://wiki.archlinux.org/title/Pacman/Tips_and_tricks#Removing_unused_packages_(orphans)
+                        # https://www.shellcheck.net/wiki/SC2046
+                        read -ra orphans < <(pacman -Qdtq)
+                        sudo pacman -Rns "${orphans[@]}" # Remove orphans
+                        # yay -Rss $(yay -Qdtq)
+                    else
+                        echo "pacman hasn't found any orphans."
+                    fi
+                fi
+            ;;
+            armp)
+                [ -z "$2" ] && "no-more-args" "package" "autoremove --purge" && exit
+                yay -Rs "${@:2}"
+            ;;
+            check|repair)
+                # TODO
+                pacman -Dk # Checks database errors (I think)
+                #pacman -Qk # Checks missing files in packages (I think)
             ;;
             downgrade|d)
                 ! [ -x "$(command -v downgrade)" ] && show-message "downgrade-missing" && exit
@@ -252,18 +314,30 @@ function main {
             update|U|refresh|ref)
                 if [ -n "$2" ]; then
                     if [ "$2" = "--force" ] || [ "$2" = "-f" ]; then
-                        yay -Syy
+                        show-message "partial-upgrade-unsupported" "full-upgrade"
+                        echo "Unlike other systems (e.g. Debian and Ubuntu), you can just use the upgrade command without running update prior."
+                        if confirm "Do you want to continue anyways?"; then
+                            yay -Syy
+                        else
+                            echo "Abort."
+                        fi
                     else
                         show-message "unknown-arg" "$2" "update [--force|-f]"
                     fi
                 else
-                    yay -Sy
+                    show-message "partial-upgrade-unsupported" "upgrade"
+                    echo "Unlike other systems (e.g. Debian and Ubuntu), you can just use the upgrade command without running update prior."
+                    if confirm "Do you want to continue anyways?"; then
+                        yay -Sy
+                    else
+                        echo "Abort."
+                    fi
                 fi
             ;;
             upgrade|u|up)
                 if [ -n "$2" ]; then
-                    echo -e "${BOLDYELLOW}Warning: Making a partial upgrade might break your system!${RESET}"
-                    echo -e "${BOLDYELLOW}It is recommended to use ${CYAN}$SCRIPTNAME install PACKAGE(S)${BOLDYELLOW} instead.${RESET}"
+                    # https://wiki.archlinux.org/title/System_maintenance#Partial_upgrades_are_unsupported
+                    show-message "partial-upgrade-unsupported" "install PACKAGE(S)"
                     if confirm "Do you want to continue anyways?"; then
                         yay -Sy "${@:2}"
                     else
@@ -275,6 +349,10 @@ function main {
                     # yay -Sua  # Update AUR only
                     # yay -Syyu # Update all and refresh database (use after updating mirrorlist)
                 fi
+            ;;
+            full-upgrade|dist-upgrade|dup|distro-sync)
+                # Not really the equivalent of "dist-upgrade", but whatever...
+                yay -Syyu # Update all and refresh database (use after updating mirrorlist)
             ;;
             update-mirrors|m)
                 ! [ -x "$(command -v reflector)" ] && show-message "reflector-missing" && exit
@@ -297,11 +375,14 @@ function main {
                         --installed|-i)
                             list-installed
                         ;;
-                        --installed-aur|-a)
-                            list-installed-from-aur
+                        --installed-aur|--installed-local|-a|-l)
+                            list-installed-from-local
                         ;;
                         --installed-repo|-r)
                             list-installed-from-repo "${@:3}"
+                        ;;
+                        --available)
+                            pacman -Sl
                         ;;
                         *)
                             show-message "unknown-arg" "$2" "list [--upgradable|--installed|--installed-aur|--installed-repo]"
@@ -311,11 +392,11 @@ function main {
                     yay -Ss ".*" # Use search and match anything.
                 fi
             ;;
-            list-updates|list-upgrades|list-upgradable|list-outdated|checkupdates|outdated|lu)
+            list-updates|checkupdates|check-update|lu)
                 list-upgradable "${@:2}"
             ;;
             li) list-installed ;;
-            la) list-installed-from-aur ;;
+            la|ll) list-installed-from-local ;;
             lr) list-installed-from-repo "${@:2}" ;;
             deptree|deplist|dependencies|dep)
                 ! [ -x "$(command -v pactree)" ] && show-message "pacman-contrib-missing" "pactree" && exit
@@ -326,22 +407,22 @@ function main {
                 [ -z "$2" ] && show-message "no-second-arg" "program" "provides" && exit
                 pacman -Qo "${@:2}"
             ;;
-            autoremove|autoclean|C)
-                yay -Yc # Remove unneeded dependencies
-                if pacman -Qdtq > /dev/null; then
-                    # https://wiki.archlinux.org/title/Pacman/Tips_and_tricks#Removing_unused_packages_(orphans)
-                    # https://www.shellcheck.net/wiki/SC2046
-                    read -ra orphans < <(pacman -Qdtq)
-                    sudo pacman -Rns "${orphans[@]}" # Remove orphans
-                    # yay -Rss $(yay -Qdtq)
-                else
-                    echo "pacman hasn't found any orphans."
-                fi
-            ;;
-            clean|c|cc)
+            clean|autoclean|c|cc)
                 ! [ -x "$(command -v paccache)" ] && show-message "pacman-contrib-missing" "paccache" && exit
-                # sudo pacman -Scc # Clean cache
                 paccache -r # Clean-up old pacman pkg in "/var/cache/pacman/pkg", but keep last 3
+                            # deletes all cached versions of installed and uninstalled packages, except for the most recent three, by default
+                paccache -ruk0 # remove all cached versions of uninstalled packages
+                               # the -u/--uninstalled switch limits the action of paccache to uninstalled packages.
+                               # the -k<num> (e.g. -k0) switch defines how many recent versions are kept.
+            ;;
+            history)
+                # TODO
+                # Crude and uncolored:
+                if [ -n "$PAGER" ]; then
+                    $PAGER "/var/log/pacman.log"
+                else
+                    less "/var/log/pacman.log"
+                fi
             ;;
             help)
                 show-help
