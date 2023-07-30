@@ -84,213 +84,95 @@ function confirm {
     fi
 }
 
-# Check if pacman command exists
-if ! [ -x "$(command -v pacman)" ] && [ "$1" != "help" ]; then
-    show-message "pacman-missing"
-    exit 1
-fi
+function sanity-checks {
+    # Check if pacman command exists
+    if ! [ -x "$(command -v pacman)" ] && [ "$1" != "help" ]; then
+        show-message "pacman-missing"
+        exit 1
+    fi
 
-# Check if yay command exists
-if ! [ -x "$(command -v yay)" ] && [ "$1" != "help" ]; then
-    show-message "yay-missing"
-    exit 1
-fi
+    # Check if yay command exists
+    if ! [ -x "$(command -v yay)" ] && [ "$1" != "help" ]; then
+        show-message "yay-missing"
+        exit 1
+    fi
 
-# Show warning if we run as root
-if [ "$EUID" -eq 0 ]; then
-    show-message "root-warning"
-    ! confirm "Do you want to continue?" && exit 1
-fi
+    # Show warning if we run as root
+    if [ "$EUID" -eq 0 ]; then
+        show-message "root-warning"
+        ! confirm "Do you want to continue?" && exit 1
+    fi
+}
 
-# INSTALL
-if [ -n "$1" ] && { [ "$1" = "install" ] || [ "$1" = "i" ] || [ "$1" = "in" ]; }; then
-    if [ -n "$2" ]; then
-        yay -S "${@:2}" --needed
-    else
-        show-message "no-more-args" "package" "install"
-    fi
-# REMOVE
-elif [ -n "$1" ] && { [ "$1" = "remove" ] || [ "$1" = "uninstall" ] || [ "$1" = "r" ] || [ "$1" = "rm" ]; }; then
-    if [ -n "$2" ]; then
-        yay -Rs "${@:2}"
-    else
-        show-message "no-more-args" "package" "remove"
-    fi
-# PURGE
-elif [ -n "$1" ] && { [ "$1" = "purge" ] || [ "$1" = "p" ]; }; then
-    if [ -n "$2" ]; then
-        yay -Rns "${@:2}"
-    else
-        show-message "no-more-args" "package" "purge"
-    fi
-# DOWNGRADE
-elif [ -n "$1" ] && { [ "$1" = "downgrade" ] || [ "$1" = "d" ]; }; then
-    if [ -n "$2" ]; then
-        if [ -x "$(command -v downgrade)" ]; then
-            downgrade "${@:2}"
+function is-known-repo {
+    REPO=1
+    case "$1" in
+        # "core" "core-testing" "extra" "extra-testing" "multilib" "multilib-testing" "gnome-unstable" "kde-unstable" "endeavouros" "aur" "chaotic-aur" "staging"
+        *-testing|*-unstable|staging|core|extra|multilib|*aur|endeavouros)
+            REPO=0
+        ;;
+    esac
+    return $REPO
+}
+
+function get-repo-color {
+    REPO_COLOR=$BOLDYELLOW
+    case "$1" in
+        *-testing|*-unstable|staging) REPO_COLOR=$BOLDRED ;;
+        core) REPO_COLOR=$BOLDYELLOW ;;
+        extra) REPO_COLOR=$BOLDGREEN ;;
+        multilib) REPO_COLOR=$BOLDCYAN ;;
+        *aur) REPO_COLOR=$BOLDBLUE ;;
+        endeavouros) REPO_COLOR=$BOLDYELLOW ;;
+    esac
+    echo "$REPO_COLOR"
+}
+
+function list-upgradable {
+    ! [ -x "$(command -v checkupdates)" ] && show-message "pacman-contrib-missing" "checkupdates" && exit
+    checkupdates "$@"
+}
+
+function list-installed {
+    yay -Qe # -e is --explicit
+}
+
+function list-installed-from-aur {
+    yay -Qm | while read -r line; do
+        # The following check assumes that any installed AUR package has a corresponding folder under ~/.cache/yay/
+        package_name="$(echo "$line" | cut -d' ' -f1)"
+        if [ -d "$HOME/.cache/yay/$package_name" ]; then
+            echo -e "${BOLDBLUE}aur${RESET}/${BOLDWHITE}$package_name${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
         else
-            show-message "downgrade-missing"
+            echo -e "${BOLDYELLOW}local${RESET}/${BOLDWHITE}$package_name${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
         fi
-    else
-        show-message "no-more-args" "package" "downgrade"
-    fi
-# SEARCH
-elif [ -n "$1" ] && { [ "$1" = "search" ] || [ "$1" = "s" ] || [ "$1" = "se" ]; };  then
-    if [ -n "$2" ]; then
-        yay -Ss "${@:2}"
-        # pacsearch "${@:2}"
-        # yay -Qs "${@:2}"
-        # yay -Ss "${@:2}"
-    else
-        show-message "no-second-arg" "pattern" "search"
-    fi
-# SHOW
-elif [ -n "$1" ] && { [ "$1" = "show" ] || [ "$1" = "info" ] || [ "$1" = "S" ]; }; then
-    if [ -n "$2" ]; then
-        yay -Si "${@:2}"
-    else
-        show-message "no-second-arg" "package" "show"
-    fi
-# UPDATE
-elif [ -n "$1" ] && { [ "$1" = "update" ] || [ "$1" = "U" ] || [ "$1" = "ref" ]; }; then
-    if [ -n "$2" ]; then
-        if [ "$2" = "--force" ] || [ "$2" = "-f" ]; then
-            yay -Syy
-        else
-            show-message "unknown-arg" "$2" "update [--force|-f]"
-        fi
-    else
-        yay -Sy
-    fi
-# UPGRADE
-elif [ -n "$1" ] && { [ "$1" = "upgrade" ] || [ "$1" = "u" ] || [ "$1" = "up" ]; }; then
-    if [ -n "$2" ]; then
-        echo -e "${BOLDYELLOW}Warning: Making a partial upgrade might break your system!${RESET}"
-        echo -e "${BOLDYELLOW}It is recommended to use ${CYAN}$SCRIPTNAME install PACKAGE(S)${BOLDYELLOW} instead.${RESET}"
-        if confirm "Do you want to continue anyways?"; then
-            yay -Sy "${@:2}"
-        else
-            echo "Abort."
-        fi
-    else
-        yay
-        # yay -Syu  # Update all, "yay" does the same
-        # yay -Sua  # Update AUR only
-        # yay -Syyu # Update all and refresh database (use after updating mirrorlist)
-    fi
-# UPDATE MIRRORS
-elif [ -n "$1" ] && { [ "$1" = "update-mirrors" ] || [ "$1" = "m" ]; }; then
-    if [ -x "$(command -v reflector)" ]; then
-        echo "Updating mirrors in /etc/pacman.d/mirrorlist"
-        reflector --protocol https --verbose --latest 25 --sort rate --save /etc/pacman.d/mirrorlist
-        if [ -x "$(command -v eos-rankmirrors)" ]; then
-            echo "Updating EndeavourOS mirrors in /etc/pacman.d/endeavouros-mirrorlist"
-            eos-rankmirrors --verbose
-        fi
-        echo "Updating database"
-        yay -Syy
-    else
-        show-message "reflector-missing"
-    fi
-# LIST
-elif [ -n "$1" ] && { [ "$1" = "list" ] || [ "$1" = "l" ]; }; then
-    if [ -n "$2" ]; then
-        if [ "$2" = "--upgradable" ] || [ "$2" = "--outdated" ] || [ "$2" = "-u" ]; then
-            if [ -x "$(command -v checkupdates)" ]; then
-                checkupdates "${@:3}"
+    done
+}
+
+function list-installed-from-repo {
+    ! [ -x "$(command -v paclist)" ] && show-message "pacman-contrib-missing" "paclist" && exit
+    if [ -n "$1" ]; then
+        is-known-repo "$1"
+        is_repo=$?
+        repo_color="$(get-repo-color "$1")"
+        paclist "${@:3}" | while read -r line; do
+            if [ "$is_repo" -eq "0" ]; then
+                echo -e "${repo_color}$1${RESET}/${BOLDWHITE}$(echo "$line" | cut -d' ' -f1)${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
             else
-                show-message "pacman-contrib-missing" "checkupdates"
+                echo -e "${BOLDWHITE}$(echo "$line" | cut -d' ' -f1)${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
             fi
-        elif [ "$2" = "--installed" ] || [ "$2" = "-i" ]; then
-            yay -Qe # -e, --explicit
-        elif [ "$2" = "--installed-aur" ] || [ "$2" = "-a" ]; then
-            yay -Qm | while read -r line; do
-                # The following check assumes that any installed AUR package has a corresponding folder under ~/.cache/yay/
-                package_name="$(echo "$line" | cut -d' ' -f1)"
-                if [ -d "$HOME/.cache/yay/$package_name" ]; then
-                    echo -e "${BOLDBLUE}aur${RESET}/${BOLDWHITE}$package_name${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
-                else
-                    echo -e "${BOLDYELLOW}local${RESET}/${BOLDWHITE}$package_name${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
-                fi
+        done
+    else
+        for repo in "core" "core-testing" "extra" "extra-testing" "multilib" "multilib-testing" "gnome-unstable" "kde-unstable" "endeavouros" "aur" "chaotic-aur" "staging"; do
+            repo_color="$(get-repo-color "$repo")"
+            paclist $repo 2>/dev/null | while read -r line; do
+                echo -e "${repo_color}$repo${RESET}/${BOLDWHITE}$(echo "$line" | cut -d' ' -f1)${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
             done
-        elif [ "$2" = "--installed-repo" ] || [ "$2" = "-r" ]; then
-            if [ -x "$(command -v paclist)" ]; then
-                if [ -n "$3" ]; then
-                    case "$3" in
-                        *-testing|*-unstable|staging) REPO_COLOR=$BOLDRED ;;
-                        core) REPO_COLOR=$BOLDYELLOW ;;
-                        extra) REPO_COLOR=$BOLDGREEN ;;
-                        multilib) REPO_COLOR=$BOLDCYAN ;;
-                        *aur) REPO_COLOR=$BOLDBLUE ;;
-                        endeavouros) REPO_COLOR=$BOLDYELLOW ;;
-                    esac
-                    paclist "${@:3}" | while read -r line; do
-                        if [ -z "$REPO_COLOR" ]; then
-                            echo -e "${BOLDWHITE}$(echo "$line" | cut -d' ' -f1)${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
-                        else
-                            echo -e "${REPO_COLOR}$3${RESET}/${BOLDWHITE}$(echo "$line" | cut -d' ' -f1)${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
-                        fi
-                    done
-                else
-                    for repo in "core" "core-testing" "extra" "extra-testing" "multilib" "multilib-testing" "gnome-unstable" "kde-unstable" "endeavouros" "aur" "chaotic-aur" "staging"; do
-                        REPO_COLOR=$BOLDYELLOW
-                        case "$repo" in
-                            *-testing|*-unstable|staging) REPO_COLOR=$BOLDRED ;;
-                            core) REPO_COLOR=$BOLDYELLOW ;;
-                            extra) REPO_COLOR=$BOLDGREEN ;;
-                            multilib) REPO_COLOR=$BOLDCYAN ;;
-                            *aur) REPO_COLOR=$BOLDBLUE ;;
-                        esac
-                        paclist $repo 2>/dev/null | while read -r line; do
-                            echo -e "${REPO_COLOR}$repo${RESET}/${BOLDWHITE}$(echo "$line" | cut -d' ' -f1)${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
-                        done
-                    done
-                fi
-            else
-                show-message "pacman-contrib-missing" "paclist"
-            fi
-        else
-            show-message "unknown-arg" "$2" "list [--upgradable|--installed|--installed-aur|--installed-repo]"
-        fi
-    else
-        yay -Ss ".*" # Use search and match anything.
+        done
     fi
-# DEPTREE
-elif [ -n "$1" ] && { [ "$1" = "deplist" ] || [ "$1" = "deptree" ]; }; then
-    if [ -x "$(command -v pactree)" ]; then
-        pactree "${@:2}"
-    else
-        show-message "pacman-contrib-missing" "pactree"
-    fi
-# PROVIDES
-elif [ -n "$1" ] && [ "$1" = "provides" ]; then
-    if [ -n "$2" ]; then
-        pacman -Qo "${@:2}"
-    else
-        show-message "no-second-arg" "program" "provides"
-    fi
-# AUTOREMOVE
-elif [ -n "$1" ] && { [ "$1" = "autoremove" ] || [ "$1" = "C" ]; }; then
-    yay -Yc # Remove unneeded dependencies
-    if pacman -Qdtq > /dev/null; then
-        # https://wiki.archlinux.org/title/Pacman/Tips_and_tricks#Removing_unused_packages_(orphans)
-        # https://www.shellcheck.net/wiki/SC2046
-        read -ra orphans < <(pacman -Qdtq)
-        sudo pacman -Rns "${orphans[@]}" # Remove orphans
-        # yay -Rss $(yay -Qdtq)
-    else
-        echo "pacman hasn't found any orphans. Yay!"
-    fi
-# CLEAN
-elif [ -n "$1" ] && { [ "$1" = "clean" ] || [ "$1" = "c" ] || [ "$1" = "cc" ]; }; then
-    # sudo pacman -Scc # Clean cache
-    if [ -x "$(command -v paccache)" ]; then
-        paccache -r # Clean-up old pacman pkg in "/var/cache/pacman/pkg", but keep last 3
-    else
-        show-message "pacman-contrib-missing" "paccache"
-    fi
-# HELP
-elif [ -z "$1" ] || [ "$1" = "help" ]; then
+}
+
+function show-help {
     echo -e "${BOLDWHITE}$SCRIPTNAME — Simple yay wrapper inspired by apt${RESET}"
     echo "--------------------------------------------"
     echo -e "${BOLDWHITE}Install:${RESET}           ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
@@ -333,7 +215,141 @@ elif [ -z "$1" ] || [ "$1" = "help" ]; then
     echo "---------"
     echo -e "${BOLDCYAN}(i)${RESET}nstall, ${BOLDCYAN}(r)${RESET}emove, ${BOLDCYAN}(p)${RESET}urge, ${BOLDCYAN}(d)${RESET}owngrade, ${BOLDCYAN}(s)${RESET}earch, ${BOLDCYAN}(S)${RESET}how,"
     echo -e "${BOLDCYAN}(U)${RESET}pdate, ${BOLDCYAN}(u)${RESET}pgrade, update-${BOLDCYAN}(m)${RESET}irrors, ${BOLDCYAN}(l)${RESET}ist, ${BOLDCYAN}(c)${RESET}lean, autoremove/auto${BOLDCYAN}(C)${RESET}lean"
-# UNKNOWN
-else
-    echo "Unknown command: $1"
-fi
+}
+
+function main {
+    sanity-checks "$@"
+
+    if [ -n "$1" ]; then
+        case "$1" in
+            install|i|in)
+                [ -z "$2" ] && show-message "no-more-args" "package" "install" && exit
+                yay -S "${@:2}" --needed
+            ;;
+            remove|uninstall|r|rm)
+                [ -z "$2" ] && show-message "no-more-args" "package" "remove" && exit
+                yay -Rs "${@:2}"
+            ;;
+            purge|p)
+                [ -z "$2" ] && show-message "no-more-args" "package" "purge" && exit
+                yay -Rns "${@:2}"
+            ;;
+            downgrade|d)
+                ! [ -x "$(command -v downgrade)" ] && show-message "downgrade-missing" && exit
+                [ -z "$2" ] && show-message "no-more-args" "package" "downgrade" && exit
+                downgrade "${@:2}"
+            ;;
+            search|s|se)
+                [ -z "$2" ] && show-message "no-second-arg" "pattern" "search" && exit
+                yay -Ss "${@:2}"
+                # pacsearch "${@:2}"
+                # yay -Qs "${@:2}"
+            ;;
+            show|info|S)
+                [ -z "$2" ] && show-message "no-second-arg" "package" "show" && exit
+                yay -Si "${@:2}"
+            ;;
+            update|U|ref)
+                if [ -n "$2" ]; then
+                    if [ "$2" = "--force" ] || [ "$2" = "-f" ]; then
+                        yay -Syy
+                    else
+                        show-message "unknown-arg" "$2" "update [--force|-f]"
+                    fi
+                else
+                    yay -Sy
+                fi
+            ;;
+            upgrade|u|up)
+                if [ -n "$2" ]; then
+                    echo -e "${BOLDYELLOW}Warning: Making a partial upgrade might break your system!${RESET}"
+                    echo -e "${BOLDYELLOW}It is recommended to use ${CYAN}$SCRIPTNAME install PACKAGE(S)${BOLDYELLOW} instead.${RESET}"
+                    if confirm "Do you want to continue anyways?"; then
+                        yay -Sy "${@:2}"
+                    else
+                        echo "Abort."
+                    fi
+                else
+                    yay
+                    # yay -Syu  # Update all, "yay" does the same
+                    # yay -Sua  # Update AUR only
+                    # yay -Syyu # Update all and refresh database (use after updating mirrorlist)
+                fi
+            ;;
+            update-mirrors|m)
+                ! [ -x "$(command -v reflector)" ] && show-message "reflector-missing" && exit
+
+                echo "Updating mirrors in /etc/pacman.d/mirrorlist"
+                reflector --protocol https --verbose --latest 25 --sort rate --save /etc/pacman.d/mirrorlist
+                if [ -x "$(command -v eos-rankmirrors)" ]; then
+                    echo "Updating EndeavourOS mirrors in /etc/pacman.d/endeavouros-mirrorlist"
+                    eos-rankmirrors --verbose
+                fi
+                echo "Updating database"
+                yay -Syy
+            ;;
+            list|l)
+                if [ -n "$2" ]; then
+                    case "$2" in
+                        --upgradable|--outdated|-u)
+                            list-upgradable "${@:3}"
+                        ;;
+                        --installed|-i)
+                            list-installed
+                        ;;
+                        --installed-aur|-a)
+                            list-installed-from-aur
+                        ;;
+                        --installed-repo|-r)
+                            list-installed-from-repo "${@:3}"
+                        ;;
+                        *)
+                            show-message "unknown-arg" "$2" "list [--upgradable|--installed|--installed-aur|--installed-repo]"
+                        ;;
+                    esac
+                else
+                    yay -Ss ".*" # Use search and match anything.
+                fi
+            ;;
+            list-updates|list-upgrades|list-upgradable|list-outdated|checkupdates|outdated|lu)
+                list-upgradable "${@:3}"
+            ;;
+            deptree|deplist|dependencies|dep)
+                ! [ -x "$(command -v pactree)" ] && show-message "pacman-contrib-missing" "pactree" && exit
+                [ -z "$2" ] && show-message "no-second-arg" "package" "deptree" && exit
+                pactree "${@:2}"
+            ;;
+            provides|what-provides)
+                [ -z "$2" ] && show-message "no-second-arg" "program" "provides" && exit
+                pacman -Qo "${@:2}"
+            ;;
+            autoremove|autoclean|C)
+                yay -Yc # Remove unneeded dependencies
+                if pacman -Qdtq > /dev/null; then
+                    # https://wiki.archlinux.org/title/Pacman/Tips_and_tricks#Removing_unused_packages_(orphans)
+                    # https://www.shellcheck.net/wiki/SC2046
+                    read -ra orphans < <(pacman -Qdtq)
+                    sudo pacman -Rns "${orphans[@]}" # Remove orphans
+                    # yay -Rss $(yay -Qdtq)
+                else
+                    echo "pacman hasn't found any orphans."
+                fi
+            ;;
+            clean|c|cc)
+                ! [ -x "$(command -v paccache)" ] && show-message "pacman-contrib-missing" "paccache" && exit
+                # sudo pacman -Scc # Clean cache
+                paccache -r # Clean-up old pacman pkg in "/var/cache/pacman/pkg", but keep last 3
+            ;;
+            help)
+                show-help
+            ;;
+            *)
+                echo "Unknown command: $1"
+            ;;
+        esac
+    else
+        show-help
+    fi
+}
+
+main "$@"
