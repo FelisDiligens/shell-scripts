@@ -13,6 +13,9 @@
 # Sources:
 # https://wiki.archlinux.org/title/pacman
 # https://wiki.archlinux.org/title/Pacman/Rosetta
+# https://github.com/icy/pacapt
+# https://forum.endeavouros.com/t/a-user-command-to-clean-and-update-system/29973/41
+# https://forum.endeavouros.com/t/a-complete-idiots-guide-to-endeavour-os-maintenance-update-upgrade/25184
 # https://github.com/Jguer/yay
 # https://gitlab.archlinux.org/pacman/pacman-contrib
 # https://github.com/archlinux-downgrade/downgrade
