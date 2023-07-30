@@ -180,7 +180,7 @@ function list-installed-from-repo {
 function show-help {
     echo -e "${BOLDWHITE}$SCRIPTNAME — Simple yay wrapper inspired by apt${RESET}"
     echo "--------------------------------------------"
-    echo -e "${BOLDWHITE}Install:${RESET}           ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
+    echo -e "${BOLDWHITE}Install:${RESET}           ${CYAN}$SCRIPTNAME install [--reinstall|--download-only] PACKAGE(S)${RESET}"
     echo -e "${BOLDWHITE}Remove:${RESET}            ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
     echo -e "${BOLDWHITE}Purge:${RESET}             ${CYAN}$SCRIPTNAME purge PACKAGE(S)${RESET}"
     echo -e " → ${CYAN}purge${RESET} removes configuration files."
@@ -236,10 +236,19 @@ function main {
         case "$1" in
             install|i|in)
                 [ -z "$2" ] && show-message "no-more-args" "package" "install" && exit
-                yay -S "${@:2}" --needed
-                # TODO
-                # add switches: --reinstall, --download-only
-                # add command: download (pacman -Sw)
+                if [ "$2" = "--reinstall" ]; then
+                    [ -z "$3" ] && show-message "no-more-args" "package" "install --reinstall" && exit
+                    yay -S "${@:3}"
+                elif [ "$2" = "--download-only" ]; then
+                    [ -z "$3" ] && show-message "no-more-args" "package" "install --download-only" && exit
+                    yay -Sw "${@:3}"
+                else
+                    yay -S "${@:2}" --needed
+                fi
+            ;;
+            reinstall)
+                [ -z "$2" ] && show-message "no-more-args" "package" "reinstall" && exit
+                yay -S "${@:2}"
             ;;
             remove|uninstall|r|rm)
                 [ -z "$2" ] && show-message "no-more-args" "package" "remove" && exit
