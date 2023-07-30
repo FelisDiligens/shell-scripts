@@ -189,10 +189,10 @@ function show-help {
     echo -e "${BOLDWHITE}Upgrade:${RESET}           ${CYAN}$SCRIPTNAME upgrade [PACKAGE(S)]${RESET}"
     echo -e "${BOLDWHITE}Update mirrors:${RESET}    ${CYAN}$SCRIPTNAME update-mirrors${RESET}"
     echo -e "${BOLDWHITE}List all:${RESET}          ${CYAN}$SCRIPTNAME list${RESET}"
-    echo -e "${BOLDWHITE}List installed:${RESET}    ${CYAN}$SCRIPTNAME list --installed|-i${RESET}"
-    echo -e "   ${BOLDWHITE}...from AUR:${RESET}    ${CYAN}$SCRIPTNAME list --installed-aur|-a${RESET}"
-    echo -e "    ${BOLDWHITE}...by repo:${RESET}    ${CYAN}$SCRIPTNAME list --installed-repo|-r [REPO]${RESET}"
-    echo -e "${BOLDWHITE}List outdated:${RESET}     ${CYAN}$SCRIPTNAME list --upgradable|-u${RESET}"
+    echo -e "${BOLDWHITE}List installed:${RESET}    ${CYAN}$SCRIPTNAME list --installed${RESET} or ${CYAN}li${RESET}"
+    echo -e "   ${BOLDWHITE}...from AUR:${RESET}    ${CYAN}$SCRIPTNAME list --installed-aur${RESET} or ${CYAN}la${RESET}"
+    echo -e "    ${BOLDWHITE}...by repo:${RESET}    ${CYAN}$SCRIPTNAME list --installed-repo [REPO]${RESET} or ${CYAN}lr${RESET}"
+    echo -e "${BOLDWHITE}List outdated:${RESET}     ${CYAN}$SCRIPTNAME list --upgradable${RESET} or ${CYAN}lu${RESET}"
     echo -e "${BOLDWHITE}Remove unused:${RESET}     ${CYAN}$SCRIPTNAME autoremove${RESET}"
     echo -e "${BOLDWHITE}Clean cache:${RESET}       ${CYAN}$SCRIPTNAME clean${RESET}"
     echo    " → Cleaning the cache might make it impossible/more difficult"
@@ -249,7 +249,7 @@ function main {
                 [ -z "$2" ] && show-message "no-second-arg" "package" "show" && exit
                 yay -Si "${@:2}"
             ;;
-            update|U|ref)
+            update|U|refresh|ref)
                 if [ -n "$2" ]; then
                     if [ "$2" = "--force" ] || [ "$2" = "-f" ]; then
                         yay -Syy
