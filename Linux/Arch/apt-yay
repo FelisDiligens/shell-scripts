@@ -180,7 +180,8 @@ function list-installed-from-repo {
 function show-help {
     echo -e "${BOLDWHITE}$SCRIPTNAME — Simple yay wrapper inspired by apt${RESET}"
     echo "--------------------------------------------"
-    echo -e "${BOLDWHITE}Install:${RESET}           ${CYAN}$SCRIPTNAME install [--reinstall|--download-only] PACKAGE(S)${RESET}"
+    echo -e "${BOLDWHITE}Install:${RESET}           ${CYAN}$SCRIPTNAME install [--reinstall|--download-only] PACKAGE(S)/FILE${RESET}"
+    echo -e " → if your argument starts with ${CYAN}./${RESET} or ${CYAN}/${RESET}, it will attempt to install a local file."
     echo -e "${BOLDWHITE}Remove:${RESET}            ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
     echo -e "${BOLDWHITE}Purge:${RESET}             ${CYAN}$SCRIPTNAME purge PACKAGE(S)${RESET}"
     echo -e " → ${CYAN}purge${RESET} removes configuration files."
@@ -242,6 +243,9 @@ function main {
                 elif [ "$2" = "--download-only" ]; then
                     [ -z "$3" ] && show-message "no-more-args" "package" "install --download-only" && exit
                     yay -Sw "${@:3}"
+                elif [[ "$2" =~ ^\.?/.* ]] && [ -f "$2" ]; then
+                    # Install local file?
+                    yay -U "${@:2}"
                 else
                     yay -S "${@:2}" --needed
                 fi
