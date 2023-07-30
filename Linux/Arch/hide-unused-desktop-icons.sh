@@ -19,15 +19,15 @@ no-display "$path/stoken-gui-small.desktop" # Software Token (small)
 no-display "$path/qv4l2.desktop" # Qt V4L2 test Utility
 no-display "$path/qvidcap.desktop" # Qt V4L2 video capture utility
 no-display "$path/lstopo.desktop" # Hardware Locality lstopo
-no-display "$path/yad-icon-browser.desktop"
-no-display "$path/yad-settings.desktop"
+no-display "$path/yad-icon-browser.desktop" # Icon Browser (Inspect GTK Icon Theme)
+no-display "$path/yad-settings.desktop" # YAD settings
 no-display "$path/avahi-discover.desktop" # Avahi Zeroconf Browser
 no-display "$path/bssh.desktop" # Avahi SSH Server Browser
 no-display "$path/bvnc.desktop" # Avahi VNC Server Browser
-no-display "$path/xterm.desktop"
-no-display "$path/uxterm.desktop"
-no-display "$path/cups.desktop"
-# no-display "$path/org.gnome.Meld.desktop"
+no-display "$path/xterm.desktop" # XTerm (good ol' reliable?), dependency for EOS stuff
+no-display "$path/uxterm.desktop" # UXTerm
+no-display "$path/cups.desktop" # Manage Printing
+# no-display "$path/org.gnome.Meld.desktop" # Diff viewer, dependency for EOS stuff
 # no-display "$path/pavucontrol.desktop" # PulseAudio volume control
 # KDE:
 no-display "$path/assistant.desktop" # Qt Assistant
@@ -35,3 +35,11 @@ no-display "$path/designer.desktop" # Qt Designer
 no-display "$path/linguist.desktop" # Qt Linguist
 no-display "$path/qdbusviewer.desktop" # Qt QDBusViewer
 no-display "$path/org.kde.kuserfeedback-console.desktop" # UserFeedback-Konsole
+# HP/Printers:
+# no-display "$path/hplip.desktop" # HP Device Manager (View device status, ink levels and perform maintenance.)
+no-display "$path/hp-uiscan.desktop"
+# Misc:
+no-display "$path/electron25.desktop"
+no-display "$path/cmake-gui.desktop"
+
+update-desktop-database "$path"

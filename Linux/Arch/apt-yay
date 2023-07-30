@@ -2,9 +2,10 @@
 
 # apt-yay
 # -------
-# Simple yay wrapper inspired by apt and dnf
+# Simple yay wrapper inspired by apt, dnf, and similar package managers.
 #
 # To "install" this script:
+# sudo mkdir -p /usr/local/bin
 # sudo cp apt-yay /usr/local/bin
 # sudo chmod +x /usr/local/bin/apt-yay
 # (you can also rename this script to any name you like)
@@ -51,7 +52,7 @@ fi
 # INSTALL
 if [ -n "$1" ] && [ "$1" = "install" ]; then
     if [ -n "$2" ]; then
-        yay -S "${@:2}"
+        yay -S "${@:2}" --needed
     else
         echo "No package given."
         echo -e "Usage: ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
@@ -130,13 +131,29 @@ elif [ -n "$1" ] && [ "$1" = "upgrade" ]; then
         fi
     else
         yay
-        # yay -Syu # Update all
-        # yay -Sua # Update AUR only
+        # yay -Syu  # Update all, "yay" does the same
+        # yay -Sua  # Update AUR only
+        # yay -Syyu # Update all and refresh database (use after updating mirrorlist)
+    fi
+# UPDATE MIRRORS
+elif [ -n "$1" ] && [ "$1" = "update-mirrors" ]; then
+    if [ -x "$(command -v reflector)" ]; then
+        echo "Updating mirrors in /etc/pacman.d/mirrorlist"
+        reflector --protocol https --verbose --latest 25 --sort rate --save /etc/pacman.d/mirrorlist
+        if [ -x "$(command -v eos-rankmirrors)" ]; then
+            echo "Updating EndeavourOS mirrors in /etc/pacman.d/endeavouros-mirrorlist"
+            eos-rankmirrors --verbose
+        fi
+        echo "Updating database"
+        yay -Syy
+    else
+        echo -e "${YELLOW}Please install reflector${RESET}"
+        echo -e "Run $ ${CYAN}yay -S reflector${RESET} or $ ${CYAN}$SCRIPTNAME install reflector${RESET}"
     fi
 # LIST
 elif [ -n "$1" ] && [ "$1" = "list" ]; then
     if [ -n "$2" ]; then
-        if [ "$2" = "--upgradable" ]; then
+        if [ "$2" = "--upgradable" ] || [ "$2" = "--outdated" ]; then
             if [ -x "$(command -v checkupdates)" ]; then
                 checkupdates "${@:3}"
             else
@@ -152,14 +169,6 @@ elif [ -n "$1" ] && [ "$1" = "list" ]; then
         fi
     else
         echo "Not implemented" # TODO
-    fi
-# OUTDATED
-elif [ -n "$1" ] && [ "$1" = "outdated" ]; then
-    if [ -x "$(command -v checkupdates)" ]; then
-        checkupdates "${@:2}"
-    else
-        echo -e "${YELLOW}Please install pacman-contrib to use checkupdates${RESET}"
-        echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
     fi
 # DEPTREE
 elif [ -n "$1" ] && { [ "$1" = "deplist" ] || [ "$1" = "deptree" ]; }; then
@@ -181,17 +190,22 @@ elif [ -n "$1" ] && [ "$1" = "provides" ]; then
 elif [ -n "$1" ] && [ "$1" = "autoremove" ]; then
     yay -Yc # Remove unneeded dependencies
     if pacman -Qdtq > /dev/null; then
-        sudo pacman -Rns $(pacman -Qdtq) # Remove orphans
+        # https://wiki.archlinux.org/title/Pacman/Tips_and_tricks#Removing_unused_packages_(orphans)
+        # https://www.shellcheck.net/wiki/SC2046
+        read -ra orphans < <(pacman -Qdtq)
+        sudo pacman -Rns "${orphans[@]}" # Remove orphans
+    else
+        echo "pacman hasn't found any orphans. Yay!"
     fi
 # CLEAN
 elif [ -n "$1" ] && [ "$1" = "clean" ]; then
-    sudo pacman -Scc # Clean cache
+    # sudo pacman -Scc # Clean cache
     if [ -x "$(command -v paccache)" ]; then
-        paccache -r # Clean-up old pacman pkg
+        paccache -r # Clean-up old pacman pkg in "/var/cache/pacman/pkg", but keep last 3
     fi
 # HELP
 elif [ -z "$1" ] || [ "$1" = "help" ]; then
-    echo "Simple yay wrapper inspired by apt and dnf"
+    echo "Simple yay wrapper inspired by apt"
     echo ""
     echo -e "Install:           ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
     echo -e "Remove:            ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
@@ -201,10 +215,11 @@ elif [ -z "$1" ] || [ "$1" = "help" ]; then
     echo -e "Search:            ${CYAN}$SCRIPTNAME search PATTERN${RESET}"
     echo -e "Show info:         ${CYAN}$SCRIPTNAME show PACKAGE${RESET}"
     echo -e "Update db:         ${CYAN}$SCRIPTNAME update [--force|-f]${RESET}"
+    echo -e " → use the ${CYAN}--force${RESET} switch after changing the mirrorlist outside of $SCRIPTNAME."
     echo -e "Upgrade:           ${CYAN}$SCRIPTNAME upgrade [PACKAGE(S)]${RESET}"
+    echo -e "Update mirrors:    ${CYAN}$SCRIPTNAME update-mirrors${RESET}"
     echo -e "List installed:    ${CYAN}$SCRIPTNAME list --installed${RESET}"
     echo -e "List outdated:     ${CYAN}$SCRIPTNAME list --upgradable${RESET}"
-    echo -e "                   ${CYAN}$SCRIPTNAME outdated${RESET}"
     echo -e "Remove unused:     ${CYAN}$SCRIPTNAME autoremove${RESET}"
     echo -e "Clean cache:       ${CYAN}$SCRIPTNAME clean${RESET}"
     echo    " → Cleaning the cache might make it impossible/more difficult to downgrade packages."
@@ -217,10 +232,16 @@ elif [ -z "$1" ] || [ "$1" = "help" ]; then
     echo ""
     echo -e "${CYAN}$SCRIPTNAME list --upgradable${RESET} uses ${CYAN}checkupdates${RESET} from the ${CYAN}pacman-contrib${RESET} package."
     echo -e " → See $ ${CYAN}man checkupdates${RESET}"
+    echo -e "${CYAN}$SCRIPTNAME clean${RESET} uses ${CYAN}paccache${RESET} from the ${CYAN}pacman-contrib${RESET} package."
+    echo -e " → See $ ${CYAN}man paccache${RESET}"
+    echo -e "${CYAN}$SCRIPTNAME update-mirrors${RESET} uses the ${CYAN}reflector${RESET} package."
+    echo -e " → See $ ${CYAN}man reflector${RESET}"
     echo -e "${CYAN}$SCRIPTNAME deptree${RESET} uses ${CYAN}pactree${RESET} from the ${CYAN}pacman-contrib${RESET} package."
     echo -e " → See $ ${CYAN}man pactree${RESET}"
     echo -e "${CYAN}$SCRIPTNAME downgrade${RESET} uses the ${CYAN}downgrade${RESET} AUR package."
     echo -e " → See $ ${CYAN}man downgrade${RESET}"
+    echo ""
+    echo "If you're using EndeavourOS, these packages should already be installed for you."
 # UNKNOWN
 else
     echo "Unknown command: $1"
