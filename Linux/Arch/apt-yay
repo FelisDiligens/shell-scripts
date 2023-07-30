@@ -18,29 +18,29 @@
 
 # Colors
 # https://stackoverflow.com/a/5947802
-RED='\033[1;31m'    # Used for errors
-YELLOW='\033[1;33m' # Used for warnings
-CYAN='\033[0;36m'   # Used to highlight commands
-GREEN='\033[1;32m'  # Bold green
-BLUE='\033[1;34m'  # Bold blue
-WHITE='\033[1;37m'  # Bold white
-PURPLE='\033[1;35m' # Bold purple
-BLACK='\033[0;30m'
-RESET='\033[0m'     # Resets text color
+BOLDRED='\033[1;31m'    # Used for errors
+BOLDYELLOW='\033[1;33m' # Used for warnings
+CYAN='\033[0;36m'       # Used to highlight commands
+BOLDCYAN='\033[1;36m'
+BOLDGREEN='\033[1;32m'
+BOLDBLUE='\033[1;34m'
+BOLDWHITE='\033[1;37m'
+BOLDPURPLE='\033[1;35m'
+RESET='\033[0m'         # Resets text color
 
 # Name of the script file, e.g. "apt-yay"
 SCRIPTNAME=$(basename "$0")
 
 # Check if pacman command exists
 if ! [ -x "$(command -v pacman)" ] && [ "$1" != "help" ]; then
-    echo -e "${RED}Error: pacman is not installed.${RESET}"
+    echo -e "${BOLDRED}Error: pacman is not installed.${RESET}"
     echo "Are you using Arch Linux?"
     exit 1
 fi
 
 # Check if yay command exists
 if ! [ -x "$(command -v yay)" ] && [ "$1" != "help" ]; then
-    echo -e "${RED}Error: yay is not installed.${RESET}"
+    echo -e "${BOLDRED}Error: yay is not installed.${RESET}"
     # Might need to run `pacman -Sy` (or `apt-yay update`) before:
     echo -e "Run (Arch)    $ ${CYAN}sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si${RESET}"
     echo -e "Run (Manjaro) $ ${CYAN}sudo pacman -S --needed git base-devel yay${RESET}"
@@ -49,7 +49,7 @@ fi
 
 # Show warning if we run as root
 if [ "$EUID" -eq 0 ]; then
-    echo -e "${YELLOW}Avoid running apt-yay as root/sudo.${RESET}"
+    echo -e "${BOLDYELLOW}Avoid running apt-yay as root/sudo.${RESET}"
     echo "It will ask for your password if necessary."
 fi
 
@@ -84,7 +84,7 @@ elif [ -n "$1" ] && [ "$1" = "downgrade" ]; then
         if [ -x "$(command -v downgrade)" ]; then
             downgrade "${@:2}"
         else
-            echo -e "${YELLOW}Please install downgrade from the AUR${RESET}. See: https://aur.archlinux.org/packages/downgrade"
+            echo -e "${BOLDYELLOW}Please install downgrade from the AUR${RESET}. See: https://aur.archlinux.org/packages/downgrade"
             echo -e "Run $ ${CYAN}yay -S downgrade${RESET} or $ ${CYAN}$SCRIPTNAME install downgrade${RESET}"
         fi
     else
@@ -125,8 +125,8 @@ elif [ -n "$1" ] && [ "$1" = "update" ]; then
 # UPGRADE
 elif [ -n "$1" ] && [ "$1" = "upgrade" ]; then
     if [ -n "$2" ]; then
-        echo -e "${YELLOW}Warning: Making a partial upgrade might break your system!${RESET}"
-        echo -e "${YELLOW}It is recommended to use ${CYAN}$SCRIPTNAME install PACKAGE(S)${YELLOW} instead.${RESET}"
+        echo -e "${BOLDYELLOW}Warning: Making a partial upgrade might break your system!${RESET}"
+        echo -e "${BOLDYELLOW}It is recommended to use ${CYAN}$SCRIPTNAME install PACKAGE(S)${BOLDYELLOW} instead.${RESET}"
         read -p "Do you want to continue anyways? [y|N] " -n 1 -r
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -152,7 +152,7 @@ elif [ -n "$1" ] && [ "$1" = "update-mirrors" ]; then
         echo "Updating database"
         yay -Syy
     else
-        echo -e "${YELLOW}Please install reflector${RESET}"
+        echo -e "${BOLDYELLOW}Please install reflector${RESET}"
         echo -e "Run $ ${CYAN}yay -S reflector${RESET} or $ ${CYAN}$SCRIPTNAME install reflector${RESET}"
     fi
 # LIST
@@ -162,12 +162,58 @@ elif [ -n "$1" ] && [ "$1" = "list" ]; then
             if [ -x "$(command -v checkupdates)" ]; then
                 checkupdates "${@:3}"
             else
-                echo -e "${YELLOW}Please install pacman-contrib to use checkupdates${RESET}"
+                echo -e "${BOLDYELLOW}Please install pacman-contrib to use checkupdates${RESET}"
                 echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
             fi
         elif [ "$2" = "--installed" ]; then
-            # paclist REPO
             yay -Qe # -e, --explicit
+        elif [ "$2" = "--installed-aur" ]; then
+            yay -Qm | while read -r line; do
+                # The following check assumes that any installed AUR package has a corresponding folder under ~/.cache/yay/
+                package_name="$(echo "$line" | cut -d' ' -f1)"
+                if [ -d "$HOME/.cache/yay/$package_name" ]; then
+                    echo -e "${BOLDBLUE}aur${RESET}/${BOLDWHITE}$package_name${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
+                else
+                    echo -e "${BOLDYELLOW}local${RESET}/${BOLDWHITE}$package_name${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
+                fi
+            done
+        elif [ "$2" = "--installed-repo" ]; then
+            if [ -x "$(command -v paclist)" ]; then
+                if [ -n "$3" ]; then
+                    case "$3" in
+                        *-testing|*-unstable|staging) REPO_COLOR=$BOLDRED ;;
+                        core) REPO_COLOR=$BOLDYELLOW ;;
+                        extra) REPO_COLOR=$BOLDGREEN ;;
+                        multilib) REPO_COLOR=$BOLDCYAN ;;
+                        *aur) REPO_COLOR=$BOLDBLUE ;;
+                        endeavouros) REPO_COLOR=$BOLDYELLOW ;;
+                    esac
+                    paclist "${@:3}" | while read -r line; do
+                        if [ -z "$REPO_COLOR" ]; then
+                            echo -e "${BOLDWHITE}$(echo "$line" | cut -d' ' -f1)${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
+                        else
+                            echo -e "${REPO_COLOR}$3${RESET}/${BOLDWHITE}$(echo "$line" | cut -d' ' -f1)${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
+                        fi
+                    done
+                else
+                    for repo in "core" "core-testing" "extra" "extra-testing" "multilib" "multilib-testing" "gnome-unstable" "kde-unstable" "endeavouros" "aur" "chaotic-aur" "staging"; do
+                        REPO_COLOR=$BOLDYELLOW
+                        case "$repo" in
+                            *-testing|*-unstable|staging) REPO_COLOR=$BOLDRED ;;
+                            core) REPO_COLOR=$BOLDYELLOW ;;
+                            extra) REPO_COLOR=$BOLDGREEN ;;
+                            multilib) REPO_COLOR=$BOLDCYAN ;;
+                            *aur) REPO_COLOR=$BOLDBLUE ;;
+                        esac
+                        paclist $repo 2>/dev/null | while read -r line; do
+                            echo -e "${REPO_COLOR}$repo${RESET}/${BOLDWHITE}$(echo "$line" | cut -d' ' -f1)${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
+                        done
+                    done
+                fi
+            else
+                echo -e "${BOLDYELLOW}Please install pacman-contrib to use paclist${RESET}"
+                echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
+            fi
         else
             echo "Unknown argument: $2"
             echo -e "Usage: ${CYAN}$SCRIPTNAME list [--upgradable|--installed]${RESET}"
@@ -180,7 +226,7 @@ elif [ -n "$1" ] && { [ "$1" = "deplist" ] || [ "$1" = "deptree" ]; }; then
     if [ -x "$(command -v pactree)" ]; then
         pactree "${@:2}"
     else
-        echo -e "${YELLOW}Please install pacman-contrib to use pactree${RESET}"
+        echo -e "${BOLDYELLOW}Please install pacman-contrib to use pactree${RESET}"
         echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
     fi
 # PROVIDES
@@ -211,40 +257,42 @@ elif [ -n "$1" ] && [ "$1" = "clean" ]; then
     fi
 # HELP
 elif [ -z "$1" ] || [ "$1" = "help" ]; then
-    echo -e "${WHITE}$SCRIPTNAME — Simple yay wrapper inspired by apt${RESET}"
+    echo -e "${BOLDWHITE}$SCRIPTNAME — Simple yay wrapper inspired by apt${RESET}"
     echo "--------------------------------------------"
-    echo -e "${WHITE}Install:${RESET}           ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
-    echo -e "${WHITE}Remove:${RESET}            ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
-    echo -e "${WHITE}Purge:${RESET}             ${CYAN}$SCRIPTNAME purge PACKAGE(S)${RESET}"
+    echo -e "${BOLDWHITE}Install:${RESET}           ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
+    echo -e "${BOLDWHITE}Remove:${RESET}            ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
+    echo -e "${BOLDWHITE}Purge:${RESET}             ${CYAN}$SCRIPTNAME purge PACKAGE(S)${RESET}"
     echo -e " → ${CYAN}purge${RESET} additionally removes configuration files."
     echo -e "   Both ${CYAN}remove${RESET} and ${CYAN}purge${RESET} also remove unused dependencies."
-    echo -e "${WHITE}Downgrade:${RESET}         ${CYAN}$SCRIPTNAME downgrade PACKAGE(S)${RESET}"
-    echo -e "${WHITE}Search:${RESET}            ${CYAN}$SCRIPTNAME search PATTERN${RESET}"
-    echo -e "${WHITE}Show info:${RESET}         ${CYAN}$SCRIPTNAME show PACKAGE${RESET}"
-    echo -e "${WHITE}Update db:${RESET}         ${CYAN}$SCRIPTNAME update [--force|-f]${RESET}"
+    echo -e "${BOLDWHITE}Downgrade:${RESET}         ${CYAN}$SCRIPTNAME downgrade PACKAGE(S)${RESET}"
+    echo -e "${BOLDWHITE}Search:${RESET}            ${CYAN}$SCRIPTNAME search PATTERN${RESET}"
+    echo -e "${BOLDWHITE}Show info:${RESET}         ${CYAN}$SCRIPTNAME show PACKAGE${RESET}"
+    echo -e "${BOLDWHITE}Update db:${RESET}         ${CYAN}$SCRIPTNAME update [--force|-f]${RESET}"
     echo -e " → use the ${CYAN}--force${RESET} switch after changing the mirrorlist"
     echo    "   outside of $SCRIPTNAME."
-    echo -e "${WHITE}Upgrade:${RESET}           ${CYAN}$SCRIPTNAME upgrade [PACKAGE(S)]${RESET}"
-    echo -e "${WHITE}Update mirrors:${RESET}    ${CYAN}$SCRIPTNAME update-mirrors${RESET}"
-    echo -e "${WHITE}List all:${RESET}          ${CYAN}$SCRIPTNAME list${RESET}"
-    echo -e "${WHITE}List installed:${RESET}    ${CYAN}$SCRIPTNAME list --installed${RESET}"
-    echo -e "${WHITE}List outdated:${RESET}     ${CYAN}$SCRIPTNAME list --upgradable${RESET}"
-    echo -e "${WHITE}Remove unused:${RESET}     ${CYAN}$SCRIPTNAME autoremove${RESET}"
-    echo -e "${WHITE}Clean cache:${RESET}       ${CYAN}$SCRIPTNAME clean${RESET}"
+    echo -e "${BOLDWHITE}Upgrade:${RESET}           ${CYAN}$SCRIPTNAME upgrade [PACKAGE(S)]${RESET}"
+    echo -e "${BOLDWHITE}Update mirrors:${RESET}    ${CYAN}$SCRIPTNAME update-mirrors${RESET}"
+    echo -e "${BOLDWHITE}List all:${RESET}          ${CYAN}$SCRIPTNAME list${RESET}"
+    echo -e "${BOLDWHITE}List installed:${RESET}    ${CYAN}$SCRIPTNAME list --installed${RESET}"
+    echo -e "   ${BOLDWHITE}...from AUR:${RESET}    ${CYAN}$SCRIPTNAME list --installed-aur${RESET}"
+    echo -e "    ${BOLDWHITE}...by repo:${RESET}    ${CYAN}$SCRIPTNAME list --installed-repo [REPO]${RESET}"
+    echo -e "${BOLDWHITE}List outdated:${RESET}     ${CYAN}$SCRIPTNAME list --upgradable${RESET}"
+    echo -e "${BOLDWHITE}Remove unused:${RESET}     ${CYAN}$SCRIPTNAME autoremove${RESET}"
+    echo -e "${BOLDWHITE}Clean cache:${RESET}       ${CYAN}$SCRIPTNAME clean${RESET}"
     echo    " → Cleaning the cache might make it impossible/more difficult"
     echo    "   to downgrade packages."
-    echo -e "${WHITE}Which package:${RESET}     ${CYAN}$SCRIPTNAME provides PROGRAM${RESET}"
-    echo -e "${WHITE}Show dependencies:${RESET} ${CYAN}$SCRIPTNAME deptree [--reverse] PACKAGE${RESET}"
-    echo -e "${WHITE}Show help:${RESET}         ${CYAN}$SCRIPTNAME [help]${RESET}"
+    echo -e "${BOLDWHITE}Which package:${RESET}     ${CYAN}$SCRIPTNAME provides PROGRAM${RESET}"
+    echo -e "${BOLDWHITE}Show dependencies:${RESET} ${CYAN}$SCRIPTNAME deptree [--reverse] PACKAGE${RESET}"
+    echo -e "${BOLDWHITE}Show help:${RESET}         ${CYAN}$SCRIPTNAME [help]${RESET}"
     echo ""
-    echo -e "${WHITE}Dependencies${RESET}"
+    echo -e "${BOLDWHITE}Dependencies${RESET}"
     echo "------------"
-    echo -e "- ${BLUE}aur${RESET}/${WHITE}yay${RESET} or ${YELLOW}endeavouros${RESET}/${WHITE}yay${RESET}"
-    echo -e "- ${GREEN}extra${RESET}/${WHITE}pacman-contrib${RESET} (paccache, pactree, checkupdates)"
-    echo -e "- ${GREEN}extra${RESET}/${WHITE}reflector${RESET}"
-    echo -e "- ${BLUE}aur${RESET}/${WHITE}downgrade${RESET}"
+    echo -e "- ${BOLDBLUE}aur${RESET}/${BOLDWHITE}yay${RESET} or ${BOLDYELLOW}endeavouros${RESET}/${BOLDWHITE}yay${RESET}"
+    echo -e "- ${BOLDGREEN}extra${RESET}/${BOLDWHITE}pacman-contrib${RESET} (paccache, pactree, paclist, checkupdates)"
+    echo -e "- ${BOLDGREEN}extra${RESET}/${BOLDWHITE}reflector${RESET}"
+    echo -e "- ${BOLDBLUE}aur${RESET}/${BOLDWHITE}downgrade${RESET}"
     echo ""
-    echo -e "If you're using ${PURPLE}EndeavourOS${RESET}, these packages should already be"
+    echo -e "If you're using ${BOLDPURPLE}EndeavourOS${RESET}, these packages should already be"
     echo -e "installed for you."
 # UNKNOWN
 else
