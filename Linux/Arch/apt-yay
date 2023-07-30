@@ -73,10 +73,16 @@ function show-message {
         ;;
     esac
 }
-# show-message "no-more-args" "package" "install"
-# show-message "no-second-arg" "program" "provides"
-# show-message "pacman-contrib-missing" "paclist"
-# show-message "unknown-arg" "list [--upgradable|--installed]"
+
+function confirm {
+    read -p "$1 [y|N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
 
 # Check if pacman command exists
 if ! [ -x "$(command -v pacman)" ] && [ "$1" != "help" ]; then
@@ -93,6 +99,7 @@ fi
 # Show warning if we run as root
 if [ "$EUID" -eq 0 ]; then
     show-message "root-warning"
+    ! confirm "Do you want to continue?" && exit 1
 fi
 
 # INSTALL
@@ -160,9 +167,7 @@ elif [ -n "$1" ] && { [ "$1" = "upgrade" ] || [ "$1" = "u" ] || [ "$1" = "up" ];
     if [ -n "$2" ]; then
         echo -e "${BOLDYELLOW}Warning: Making a partial upgrade might break your system!${RESET}"
         echo -e "${BOLDYELLOW}It is recommended to use ${CYAN}$SCRIPTNAME install PACKAGE(S)${BOLDYELLOW} instead.${RESET}"
-        read -p "Do you want to continue anyways? [y|N] " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if confirm "Do you want to continue anyways?"; then
             yay -Sy "${@:2}"
         else
             echo "Abort."
