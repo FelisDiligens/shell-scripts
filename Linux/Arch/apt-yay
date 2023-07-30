@@ -18,9 +18,14 @@
 
 # Colors
 # https://stackoverflow.com/a/5947802
-RED='\033[0;31m'    # Used for errors
+RED='\033[1;31m'    # Used for errors
 YELLOW='\033[1;33m' # Used for warnings
 CYAN='\033[0;36m'   # Used to highlight commands
+GREEN='\033[1;32m'  # Bold green
+BLUE='\033[1;34m'  # Bold blue
+WHITE='\033[1;37m'  # Bold white
+PURPLE='\033[1;35m' # Bold purple
+BLACK='\033[0;30m'
 RESET='\033[0m'     # Resets text color
 
 # Name of the script file, e.g. "apt-yay"
@@ -206,44 +211,41 @@ elif [ -n "$1" ] && [ "$1" = "clean" ]; then
     fi
 # HELP
 elif [ -z "$1" ] || [ "$1" = "help" ]; then
-    echo "Simple yay wrapper inspired by apt"
+    echo -e "${WHITE}$SCRIPTNAME — Simple yay wrapper inspired by apt${RESET}"
+    echo "--------------------------------------------"
+    echo -e "${WHITE}Install:${RESET}           ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
+    echo -e "${WHITE}Remove:${RESET}            ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
+    echo -e "${WHITE}Purge:${RESET}             ${CYAN}$SCRIPTNAME purge PACKAGE(S)${RESET}"
+    echo -e " → ${CYAN}purge${RESET} additionally removes configuration files."
+    echo -e "   Both ${CYAN}remove${RESET} and ${CYAN}purge${RESET} also remove unused dependencies."
+    echo -e "${WHITE}Downgrade:${RESET}         ${CYAN}$SCRIPTNAME downgrade PACKAGE(S)${RESET}"
+    echo -e "${WHITE}Search:${RESET}            ${CYAN}$SCRIPTNAME search PATTERN${RESET}"
+    echo -e "${WHITE}Show info:${RESET}         ${CYAN}$SCRIPTNAME show PACKAGE${RESET}"
+    echo -e "${WHITE}Update db:${RESET}         ${CYAN}$SCRIPTNAME update [--force|-f]${RESET}"
+    echo -e " → use the ${CYAN}--force${RESET} switch after changing the mirrorlist"
+    echo    "   outside of $SCRIPTNAME."
+    echo -e "${WHITE}Upgrade:${RESET}           ${CYAN}$SCRIPTNAME upgrade [PACKAGE(S)]${RESET}"
+    echo -e "${WHITE}Update mirrors:${RESET}    ${CYAN}$SCRIPTNAME update-mirrors${RESET}"
+    echo -e "${WHITE}List all:${RESET}          ${CYAN}$SCRIPTNAME list${RESET}"
+    echo -e "${WHITE}List installed:${RESET}    ${CYAN}$SCRIPTNAME list --installed${RESET}"
+    echo -e "${WHITE}List outdated:${RESET}     ${CYAN}$SCRIPTNAME list --upgradable${RESET}"
+    echo -e "${WHITE}Remove unused:${RESET}     ${CYAN}$SCRIPTNAME autoremove${RESET}"
+    echo -e "${WHITE}Clean cache:${RESET}       ${CYAN}$SCRIPTNAME clean${RESET}"
+    echo    " → Cleaning the cache might make it impossible/more difficult"
+    echo    "   to downgrade packages."
+    echo -e "${WHITE}Which package:${RESET}     ${CYAN}$SCRIPTNAME provides PROGRAM${RESET}"
+    echo -e "${WHITE}Show dependencies:${RESET} ${CYAN}$SCRIPTNAME deptree [--reverse] PACKAGE${RESET}"
+    echo -e "${WHITE}Show help:${RESET}         ${CYAN}$SCRIPTNAME [help]${RESET}"
     echo ""
-    echo -e "Install:           ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
-    echo -e "Remove:            ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
-    echo -e "Purge:             ${CYAN}$SCRIPTNAME purge PACKAGE(S)${RESET}"
-    echo    " → 'purge' additionally removes configuration files. Both 'remove' and 'purge' also remove unused dependencies."
-    echo -e "Downgrade:         ${CYAN}$SCRIPTNAME downgrade PACKAGE(S)${RESET}"
-    echo -e "Search:            ${CYAN}$SCRIPTNAME search PATTERN${RESET}"
-    echo -e "Show info:         ${CYAN}$SCRIPTNAME show PACKAGE${RESET}"
-    echo -e "Update db:         ${CYAN}$SCRIPTNAME update [--force|-f]${RESET}"
-    echo -e " → use the ${CYAN}--force${RESET} switch after changing the mirrorlist outside of $SCRIPTNAME."
-    echo -e "Upgrade:           ${CYAN}$SCRIPTNAME upgrade [PACKAGE(S)]${RESET}"
-    echo -e "Update mirrors:    ${CYAN}$SCRIPTNAME update-mirrors${RESET}"
-    echo -e "List all:          ${CYAN}$SCRIPTNAME list${RESET}"
-    echo -e "List installed:    ${CYAN}$SCRIPTNAME list --installed${RESET}"
-    echo -e "List outdated:     ${CYAN}$SCRIPTNAME list --upgradable${RESET}"
-    echo -e "Remove unused:     ${CYAN}$SCRIPTNAME autoremove${RESET}"
-    echo -e "Clean cache:       ${CYAN}$SCRIPTNAME clean${RESET}"
-    echo    " → Cleaning the cache might make it impossible/more difficult to downgrade packages."
-    echo -e "Which package:     ${CYAN}$SCRIPTNAME provides PROGRAM${RESET}"
-    echo -e "Show dependencies: ${CYAN}$SCRIPTNAME deptree [--reverse] PACKAGE${RESET}"
-    echo -e "Show help:         ${CYAN}$SCRIPTNAME [help]${RESET}"
+    echo -e "${WHITE}Dependencies${RESET}"
+    echo "------------"
+    echo -e "- ${BLUE}aur${RESET}/${WHITE}yay${RESET} or ${YELLOW}endeavouros${RESET}/${WHITE}yay${RESET}"
+    echo -e "- ${GREEN}extra${RESET}/${WHITE}pacman-contrib${RESET} (paccache, pactree, checkupdates)"
+    echo -e "- ${GREEN}extra${RESET}/${WHITE}reflector${RESET}"
+    echo -e "- ${BLUE}aur${RESET}/${WHITE}downgrade${RESET}"
     echo ""
-    echo ""
-    echo "External dependencies:"
-    echo ""
-    echo -e "${CYAN}$SCRIPTNAME list --upgradable${RESET} uses ${CYAN}checkupdates${RESET} from the ${CYAN}pacman-contrib${RESET} package."
-    echo -e " → See $ ${CYAN}man checkupdates${RESET}"
-    echo -e "${CYAN}$SCRIPTNAME clean${RESET} uses ${CYAN}paccache${RESET} from the ${CYAN}pacman-contrib${RESET} package."
-    echo -e " → See $ ${CYAN}man paccache${RESET}"
-    echo -e "${CYAN}$SCRIPTNAME update-mirrors${RESET} uses the ${CYAN}reflector${RESET} package."
-    echo -e " → See $ ${CYAN}man reflector${RESET}"
-    echo -e "${CYAN}$SCRIPTNAME deptree${RESET} uses ${CYAN}pactree${RESET} from the ${CYAN}pacman-contrib${RESET} package."
-    echo -e " → See $ ${CYAN}man pactree${RESET}"
-    echo -e "${CYAN}$SCRIPTNAME downgrade${RESET} uses the ${CYAN}downgrade${RESET} AUR package."
-    echo -e " → See $ ${CYAN}man downgrade${RESET}"
-    echo ""
-    echo "If you're using EndeavourOS, these packages should already be installed for you."
+    echo -e "If you're using ${PURPLE}EndeavourOS${RESET}, these packages should already be"
+    echo -e "installed for you."
 # UNKNOWN
 else
     echo "Unknown command: $1"
