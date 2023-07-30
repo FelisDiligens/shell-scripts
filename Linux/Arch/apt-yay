@@ -312,8 +312,11 @@ function main {
                 fi
             ;;
             list-updates|list-upgrades|list-upgradable|list-outdated|checkupdates|outdated|lu)
-                list-upgradable "${@:3}"
+                list-upgradable "${@:2}"
             ;;
+            li) list-installed ;;
+            la) list-installed-from-aur ;;
+            lr) list-installed-from-repo "${@:2}" ;;
             deptree|deplist|dependencies|dep)
                 ! [ -x "$(command -v pactree)" ] && show-message "pacman-contrib-missing" "pactree" && exit
                 [ -z "$2" ] && show-message "no-second-arg" "package" "deptree" && exit
