@@ -2,7 +2,7 @@
 
 # apt-yay
 # -------
-# Simple yay wrapper inspired by apt, dnf, and similar package managers.
+# Simple yay wrapper inspired by apt, dnf, zypper, and similar package managers.
 #
 # To "install" this script:
 # sudo mkdir -p /usr/local/bin
@@ -55,7 +55,7 @@ fi
 
 
 # INSTALL
-if [ -n "$1" ] && [ "$1" = "install" ]; then
+if [ -n "$1" ] && { [ "$1" = "install" ] || [ "$1" = "i" ] || [ "$1" = "in" ]; }; then
     if [ -n "$2" ]; then
         yay -S "${@:2}" --needed
     else
@@ -63,7 +63,7 @@ if [ -n "$1" ] && [ "$1" = "install" ]; then
         echo -e "Usage: ${CYAN}$SCRIPTNAME install PACKAGE(S)${RESET}"
     fi
 # REMOVE
-elif [ -n "$1" ] && { [ "$1" = "remove" ] || [ "$1" = "uninstall" ]; }; then
+elif [ -n "$1" ] && { [ "$1" = "remove" ] || [ "$1" = "uninstall" ] || [ "$1" = "r" ] || [ "$1" = "rm" ]; }; then
     if [ -n "$2" ]; then
         yay -Rs "${@:2}"
     else
@@ -71,7 +71,7 @@ elif [ -n "$1" ] && { [ "$1" = "remove" ] || [ "$1" = "uninstall" ]; }; then
         echo -e "Usage: ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
     fi
 # PURGE
-elif [ -n "$1" ] && [ "$1" = "purge" ]; then
+elif [ -n "$1" ] && { [ "$1" = "purge" ] || [ "$1" = "p" ]; }; then
     if [ -n "$2" ]; then
         yay -Rns "${@:2}"
     else
@@ -79,7 +79,7 @@ elif [ -n "$1" ] && [ "$1" = "purge" ]; then
         echo -e "Usage: ${CYAN}$SCRIPTNAME remove PACKAGE(S)${RESET}"
     fi
 # DOWNGRADE
-elif [ -n "$1" ] && [ "$1" = "downgrade" ]; then
+elif [ -n "$1" ] && { [ "$1" = "downgrade" ] || [ "$1" = "d" ]; }; then
     if [ -n "$2" ]; then
         if [ -x "$(command -v downgrade)" ]; then
             downgrade "${@:2}"
@@ -92,7 +92,7 @@ elif [ -n "$1" ] && [ "$1" = "downgrade" ]; then
         echo -e "Usage: ${CYAN}$SCRIPTNAME downgrade PACKAGE(S)${RESET}"
     fi
 # SEARCH
-elif [ -n "$1" ] && [ "$1" = "search" ]; then
+elif [ -n "$1" ] && { [ "$1" = "search" ] || [ "$1" = "s" ] || [ "$1" = "se" ]; };  then
     if [ -n "$2" ]; then
         yay -Ss "${@:2}"
         # pacsearch "${@:2}"
@@ -103,7 +103,7 @@ elif [ -n "$1" ] && [ "$1" = "search" ]; then
         echo -e "Usage: ${CYAN}$SCRIPTNAME search PATTERN${RESET}"
     fi
 # SHOW
-elif [ -n "$1" ] && { [ "$1" = "show" ] || [ "$1" = "info" ]; }; then
+elif [ -n "$1" ] && { [ "$1" = "show" ] || [ "$1" = "info" ] || [ "$1" = "S" ]; }; then
     if [ -n "$2" ]; then
         yay -Si "${@:2}"
     else
@@ -111,7 +111,7 @@ elif [ -n "$1" ] && { [ "$1" = "show" ] || [ "$1" = "info" ]; }; then
         echo -e "Usage: ${CYAN}$SCRIPTNAME show PACKAGE${RESET}"
     fi
 # UPDATE
-elif [ -n "$1" ] && [ "$1" = "update" ]; then
+elif [ -n "$1" ] && { [ "$1" = "update" ] || [ "$1" = "U" ] || [ "$1" = "ref" ]; }; then
     if [ -n "$2" ]; then
         if [ "$2" = "--force" ] || [ "$2" = "-f" ]; then
             yay -Syy
@@ -123,7 +123,7 @@ elif [ -n "$1" ] && [ "$1" = "update" ]; then
         yay -Sy
     fi
 # UPGRADE
-elif [ -n "$1" ] && [ "$1" = "upgrade" ]; then
+elif [ -n "$1" ] && { [ "$1" = "upgrade" ] || [ "$1" = "u" ] || [ "$1" = "up" ]; }; then
     if [ -n "$2" ]; then
         echo -e "${BOLDYELLOW}Warning: Making a partial upgrade might break your system!${RESET}"
         echo -e "${BOLDYELLOW}It is recommended to use ${CYAN}$SCRIPTNAME install PACKAGE(S)${BOLDYELLOW} instead.${RESET}"
@@ -141,7 +141,7 @@ elif [ -n "$1" ] && [ "$1" = "upgrade" ]; then
         # yay -Syyu # Update all and refresh database (use after updating mirrorlist)
     fi
 # UPDATE MIRRORS
-elif [ -n "$1" ] && [ "$1" = "update-mirrors" ]; then
+elif [ -n "$1" ] && { [ "$1" = "update-mirrors" ] || [ "$1" = "m" ]; }; then
     if [ -x "$(command -v reflector)" ]; then
         echo "Updating mirrors in /etc/pacman.d/mirrorlist"
         reflector --protocol https --verbose --latest 25 --sort rate --save /etc/pacman.d/mirrorlist
@@ -156,18 +156,18 @@ elif [ -n "$1" ] && [ "$1" = "update-mirrors" ]; then
         echo -e "Run $ ${CYAN}yay -S reflector${RESET} or $ ${CYAN}$SCRIPTNAME install reflector${RESET}"
     fi
 # LIST
-elif [ -n "$1" ] && [ "$1" = "list" ]; then
+elif [ -n "$1" ] && { [ "$1" = "list" ] || [ "$1" = "l" ]; }; then
     if [ -n "$2" ]; then
-        if [ "$2" = "--upgradable" ] || [ "$2" = "--outdated" ]; then
+        if [ "$2" = "--upgradable" ] || [ "$2" = "--outdated" ] || [ "$2" = "-u" ]; then
             if [ -x "$(command -v checkupdates)" ]; then
                 checkupdates "${@:3}"
             else
                 echo -e "${BOLDYELLOW}Please install pacman-contrib to use checkupdates${RESET}"
                 echo -e "Run $ ${CYAN}yay -S pacman-contrib${RESET} or $ ${CYAN}$SCRIPTNAME install pacman-contrib${RESET}"
             fi
-        elif [ "$2" = "--installed" ]; then
+        elif [ "$2" = "--installed" ] || [ "$2" = "-i" ]; then
             yay -Qe # -e, --explicit
-        elif [ "$2" = "--installed-aur" ]; then
+        elif [ "$2" = "--installed-aur" ] || [ "$2" = "-a" ]; then
             yay -Qm | while read -r line; do
                 # The following check assumes that any installed AUR package has a corresponding folder under ~/.cache/yay/
                 package_name="$(echo "$line" | cut -d' ' -f1)"
@@ -177,7 +177,7 @@ elif [ -n "$1" ] && [ "$1" = "list" ]; then
                     echo -e "${BOLDYELLOW}local${RESET}/${BOLDWHITE}$package_name${RESET} ${BOLDGREEN}$(echo "$line" | cut -d' ' -f2)${RESET}"
                 fi
             done
-        elif [ "$2" = "--installed-repo" ]; then
+        elif [ "$2" = "--installed-repo" ] || [ "$2" = "-r" ]; then
             if [ -x "$(command -v paclist)" ]; then
                 if [ -n "$3" ]; then
                     case "$3" in
@@ -238,7 +238,7 @@ elif [ -n "$1" ] && [ "$1" = "provides" ]; then
         echo -e "Usage: ${CYAN}$SCRIPTNAME provides PROGRAM${RESET}"
     fi
 # AUTOREMOVE
-elif [ -n "$1" ] && [ "$1" = "autoremove" ]; then
+elif [ -n "$1" ] && { [ "$1" = "autoremove" ] || [ "$1" = "C" ]; }; then
     yay -Yc # Remove unneeded dependencies
     if pacman -Qdtq > /dev/null; then
         # https://wiki.archlinux.org/title/Pacman/Tips_and_tricks#Removing_unused_packages_(orphans)
@@ -250,7 +250,7 @@ elif [ -n "$1" ] && [ "$1" = "autoremove" ]; then
         echo "pacman hasn't found any orphans. Yay!"
     fi
 # CLEAN
-elif [ -n "$1" ] && [ "$1" = "clean" ]; then
+elif [ -n "$1" ] && { [ "$1" = "clean" ] || [ "$1" = "c" ] || [ "$1" = "cc" ]; }; then
     # sudo pacman -Scc # Clean cache
     if [ -x "$(command -v paccache)" ]; then
         paccache -r # Clean-up old pacman pkg in "/var/cache/pacman/pkg", but keep last 3
@@ -273,10 +273,10 @@ elif [ -z "$1" ] || [ "$1" = "help" ]; then
     echo -e "${BOLDWHITE}Upgrade:${RESET}           ${CYAN}$SCRIPTNAME upgrade [PACKAGE(S)]${RESET}"
     echo -e "${BOLDWHITE}Update mirrors:${RESET}    ${CYAN}$SCRIPTNAME update-mirrors${RESET}"
     echo -e "${BOLDWHITE}List all:${RESET}          ${CYAN}$SCRIPTNAME list${RESET}"
-    echo -e "${BOLDWHITE}List installed:${RESET}    ${CYAN}$SCRIPTNAME list --installed${RESET}"
-    echo -e "   ${BOLDWHITE}...from AUR:${RESET}    ${CYAN}$SCRIPTNAME list --installed-aur${RESET}"
-    echo -e "    ${BOLDWHITE}...by repo:${RESET}    ${CYAN}$SCRIPTNAME list --installed-repo [REPO]${RESET}"
-    echo -e "${BOLDWHITE}List outdated:${RESET}     ${CYAN}$SCRIPTNAME list --upgradable${RESET}"
+    echo -e "${BOLDWHITE}List installed:${RESET}    ${CYAN}$SCRIPTNAME list --installed|-i${RESET}"
+    echo -e "   ${BOLDWHITE}...from AUR:${RESET}    ${CYAN}$SCRIPTNAME list --installed-aur|-a${RESET}"
+    echo -e "    ${BOLDWHITE}...by repo:${RESET}    ${CYAN}$SCRIPTNAME list --installed-repo|-r [REPO]${RESET}"
+    echo -e "${BOLDWHITE}List outdated:${RESET}     ${CYAN}$SCRIPTNAME list --upgradable|-u${RESET}"
     echo -e "${BOLDWHITE}Remove unused:${RESET}     ${CYAN}$SCRIPTNAME autoremove${RESET}"
     echo -e "${BOLDWHITE}Clean cache:${RESET}       ${CYAN}$SCRIPTNAME clean${RESET}"
     echo    " → Cleaning the cache might make it impossible/more difficult"
@@ -294,8 +294,12 @@ elif [ -z "$1" ] || [ "$1" = "help" ]; then
     echo ""
     echo -e "If you're using ${BOLDPURPLE}EndeavourOS${RESET}, these packages should already be"
     echo -e "installed for you."
+    echo ""
+    echo -e "${BOLDWHITE}Shortcuts${RESET}"
+    echo "---------"
+    echo -e "${BOLDCYAN}(i)${RESET}nstall, ${BOLDCYAN}(r)${RESET}emove, ${BOLDCYAN}(p)${RESET}urge, ${BOLDCYAN}(d)${RESET}owngrade, ${BOLDCYAN}(s)${RESET}earch, ${BOLDCYAN}(S)${RESET}how,"
+    echo -e "${BOLDCYAN}(U)${RESET}pdate, ${BOLDCYAN}(u)${RESET}pgrade, update-${BOLDCYAN}(m)${RESET}irrors, ${BOLDCYAN}(l)${RESET}ist, ${BOLDCYAN}(c)${RESET}lean, autoremove/auto${BOLDCYAN}(C)${RESET}lean"
 # UNKNOWN
 else
     echo "Unknown command: $1"
-    echo ""
 fi
