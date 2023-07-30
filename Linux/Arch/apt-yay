@@ -230,7 +230,7 @@ function show-help {
     echo "---------"
     echo -e "${BOLDCYAN}(i)${RESET}nstall, ${BOLDCYAN}(r)${RESET}emove, ${BOLDCYAN}(p)${RESET}urge, autoremove ${BOLDCYAN}(arm)${RESET}, autoremove --purge ${BOLDCYAN}(armp)${RESET}, ${BOLDCYAN}(d)${RESET}owngrade,"
     echo -e "${BOLDCYAN}(s)${RESET}earch, ${BOLDCYAN}(S)${RESET}how, ${BOLDCYAN}(U)${RESET}pdate, ${BOLDCYAN}(u)${RESET}pgrade, update-${BOLDCYAN}(m)${RESET}irrors, ${BOLDCYAN}(c)${RESET}lean,"
-    echo -e "${BOLDCYAN}(l)${RESET}ist, list --installed ${BOLDCYAN}(li)${RESET}, list --upgradable ${BOLDCYAN}(lu)${RESET}, list --installed-local ${BOLDCYAN}(ll)${RESET}, list --installed-repo ${BOLDCYAN}(lr)${RESET}"
+    echo -e "${BOLDCYAN}(l)${RESET}ist, list --installed ${BOLDCYAN}(li)${RESET}, list --upgradable ${BOLDCYAN}(lu)${RESET}, list --installed-local ${BOLDCYAN}(ll)${RESET}, list --installed-repo ${BOLDCYAN}(lr)${RESET}, list --available ${BOLDCYAN}(la)${RESET}"
 }
 
 function main {
@@ -401,7 +401,7 @@ function main {
                             pacman -Sl
                         ;;
                         *)
-                            show-message "unknown-arg" "$2" "list [--upgradable|--installed|--installed-aur|--installed-repo]"
+                            show-message "unknown-arg" "$2" "list [--upgradable|--installed|--installed-aur|--installed-repo|--available]"
                         ;;
                     esac
                 else
@@ -412,8 +412,9 @@ function main {
                 list-upgradable "${@:2}"
             ;;
             li) list-installed ;;
-            la|ll) list-installed-from-local ;;
+            ll) list-installed-from-local ;;
             lr) list-installed-from-repo "${@:2}" ;;
+            la) pacman -Sl ;;
             deptree|deplist|dependencies|dep)
                 ! [ -x "$(command -v pactree)" ] && show-message "pacman-contrib-missing" "pactree" && exit
                 [ -z "$2" ] && show-message "no-second-arg" "package" "deptree" && exit
