@@ -40,7 +40,7 @@ if [ -z "$bootloader_id" ]; then
                 bootloader_id="manjaro"
             ;;
             *)
-                bootloader_id="$NAME"
+                bootloader_id="$ID"
             ;;
         esac
     else
@@ -94,17 +94,23 @@ if [ -d "/sys/firmware/efi" ]; then
     if [ -x "$(command -v mokutil)" ] && mokutil --sb-state | grep "SecureBoot enabled" -q; then
         echo "Detected EFI with Secure Boot"
         echo "ESP mount point: $esp_mount_point"
+        echo "Bootloader ID: $bootloader_id"
         echo
-        read -p "Install GRUB [y/N]? " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            grub-install --target=x86_64-efi --efi-directory="$esp_mount_point" --bootloader-id="$bootloader_id" -modules="normal test efi_gop efi_uga search echo linux all_video gfxmenu gfxterm_background gfxterm_menu gfxterm loadenv configfile tpm" && echo "Done."
-        else
-            echo "Abort."
-        fi
+        echo "Not implemented yet. Install manually or disable Secure Boot."
+        # read -p "Install GRUB [y/N]? " -n 1 -r
+        # echo
+        # if [[ $REPLY =~ ^[Yy]$ ]]; then
+        #     # To list all available modules:
+        #     # find /boot/grub -name "*.mod" | sed -E "s/.*\/(.+)\.mod/\1/"
+        #     grub-install --target=x86_64-efi --efi-directory="$esp_mount_point" --bootloader-id="$bootloader_id" -modules="normal test efi_gop efi_uga search echo linux all_video gfxmenu gfxterm_background gfxterm_menu gfxterm loadenv configfile tpm" && echo "Done."
+        #     # grub-install --uefi-secure-boot
+        # else
+        #     echo "Abort."
+        # fi
     else
         echo "Detected EFI"
         echo "ESP mount point: $esp_mount_point"
+        echo "Bootloader ID: $bootloader_id"
         echo
         read -p "Install GRUB [y/N]? " -n 1 -r
         echo
@@ -117,6 +123,7 @@ if [ -d "/sys/firmware/efi" ]; then
 else
     echo "Detected legacy boot"
     echo "Block device: $mbr_block_device"
+    echo "Bootloader ID: $bootloader_id"
     echo
     read -p "Install GRUB [y/N]? " -n 1 -r
     echo
