@@ -31,13 +31,13 @@ if [ -z "$bootloader_id" ]; then
         . /etc/os-release
         case "$ID" in
             arch|archarm)
-                bootloader_id="Arch"
+                bootloader_id="arch"
             ;;
             endeavouros)
-                bootloader_id="EndeavourOS"
+                bootloader_id="endeavouros"
             ;;
             manjaro|manjaro-arm)
-                bootloader_id="Manjaro"
+                bootloader_id="manjaro"
             ;;
             *)
                 bootloader_id="$NAME"
