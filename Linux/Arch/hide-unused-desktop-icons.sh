@@ -27,7 +27,6 @@ no-display "$path/bvnc.desktop" # Avahi VNC Server Browser
 no-display "$path/xterm.desktop" # XTerm (good ol' reliable?), dependency for EOS stuff
 no-display "$path/uxterm.desktop" # UXTerm
 no-display "$path/cups.desktop" # Manage Printing
-# no-display "$path/org.gnome.Meld.desktop" # Diff viewer, dependency for EOS stuff
 # no-display "$path/pavucontrol.desktop" # PulseAudio volume control
 # KDE:
 no-display "$path/assistant.desktop" # Qt Assistant
@@ -35,11 +34,16 @@ no-display "$path/designer.desktop" # Qt Designer
 no-display "$path/linguist.desktop" # Qt Linguist
 no-display "$path/qdbusviewer.desktop" # Qt QDBusViewer
 no-display "$path/org.kde.kuserfeedback-console.desktop" # UserFeedback-Konsole
+# Manjaro
+no-display "$path/cleanup-manjaro-gnome.desktop"
 # HP/Printers:
 # no-display "$path/hplip.desktop" # HP Device Manager (View device status, ink levels and perform maintenance.)
 no-display "$path/hp-uiscan.desktop"
 # Misc:
 no-display "$path/electron25.desktop"
 no-display "$path/cmake-gui.desktop"
+no-display "$path/xdvi.desktop"
+no-display "$path/fish.desktop"
+no-display "$path/htop.desktop"
 
 update-desktop-database "$path"

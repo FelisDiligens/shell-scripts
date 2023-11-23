@@ -9,10 +9,15 @@ if [ $ID != "ubuntu" ]; then
     exit 1
 fi
 
+if [ -z $VERSION_ID ]; then
+    echo "VERSION_ID not found in /etc/os-release"
+    exit 1
+fi
+
 download_folder=$(xdg-user-dir DOWNLOAD)
 
 # Determine download URL:
-download_url="https://dl.insynchq.com/linux/desktop/ubuntu/$VERSION_ID"
+download_url="https://dl.insynchq.com/linux/desktop/ubuntu/$VERSION_ID" # e.g. 23.04
 
 # Download file:
 # https://superuser.com/a/1146162
