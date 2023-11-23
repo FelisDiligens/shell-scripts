@@ -1,0 +1,11 @@
+Windows Registry Editor Version 5.00
+
+; Source: https://superuser.com/questions/372602/how-to-copy-picture-from-a-file-to-clipboard
+
+[HKEY_CLASSES_ROOT\*\shell\CopyImageToClipboard]
+@="Copy image to clipboard"
+; @="Bild in die Zwischenablage kopieren"
+
+[HKEY_CLASSES_ROOT\*\shell\CopyImageToClipboard\command]
+@="\"C:\\nircmd\\nircmdc.exe\" clipboard copyimage \"%1\""
+; @="powershell.exe -windowstyle hidden -Command \"Add-Type -AssemblyName System.Windows.Forms; [Windows.Forms.Clipboard]::SetImage($([System.Drawing.Image]::Fromfile(\\\"%1\\\")))\""
