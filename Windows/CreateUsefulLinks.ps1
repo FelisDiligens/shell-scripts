@@ -38,3 +38,4 @@ create-shortcut "$FolderPath\Systemsteuerung.lnk" "C:\Windows\System32\control.e
 create-shortcut "$FolderPath\Textdienste und Eingabesprachen.lnk" "C:\Windows\System32\rundll32.exe" "Shell32.dll,Control_RunDLL input.dll,,{C07337D3-DB2C-4D0B-9A93-B722A6C106E2}"
 create-shortcut "$FolderPath\Themes.lnk" "C:\Windows\Resources\Themes"
 create-shortcut "$FolderPath\Umgebungsvariablen.lnk" "C:\Windows\System32\rundll32.exe" "sysdm.cpl,EditEnvironmentVariables"
+create-shortcut "$FolderPath\Leistungsoptionen.lnk" "C:\Windows\System32\SystemPropertiesPerformance.exe"
