@@ -115,7 +115,7 @@ if [ -d "/sys/firmware/efi" ]; then
         read -p "Install GRUB [y/N]? " -n 1 -r
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            grub-install --target=x86_64-efi --efi-directory="$esp_mount_point" --bootloader-id="$bootloader_id" && echo "Done."
+            grub-install --target=x86_64-efi --efi-directory="$esp_mount_point" --bootloader-id="$bootloader_id" --recheck && echo "Done."
         else
             echo "Abort."
         fi
