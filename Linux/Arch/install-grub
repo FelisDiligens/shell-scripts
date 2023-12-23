@@ -17,6 +17,7 @@ bootloader_id="" # You can get the bootloader id by running "efibootmgr", or lea
 # https://wiki.archlinux.org/title/GRUB#Installation
 # https://wiki.archlinux.org/title/GRUB#Installation_2
 # https://discovery.endeavouros.com/system-rescue/repair-a-non-booting-grub/2021/03/
+# https://wiki.manjaro.org/index.php/GRUB/Restore_the_GRUB_Bootloader/en#Reinstall_GRUB
 
 
 # Check if we're running as root:
@@ -37,7 +38,7 @@ if [ -z "$bootloader_id" ]; then
                 bootloader_id="endeavouros"
             ;;
             manjaro|manjaro-arm)
-                bootloader_id="manjaro"
+                bootloader_id="Manjaro"
             ;;
             *)
                 bootloader_id="$ID"
@@ -96,17 +97,19 @@ if [ -d "/sys/firmware/efi" ]; then
         echo "ESP mount point: $esp_mount_point"
         echo "Bootloader ID: $bootloader_id"
         echo
-        echo "Not implemented yet. Install manually or disable Secure Boot."
-        # read -p "Install GRUB [y/N]? " -n 1 -r
-        # echo
-        # if [[ $REPLY =~ ^[Yy]$ ]]; then
-        #     # To list all available modules:
-        #     # find /boot/grub -name "*.mod" | sed -E "s/.*\/(.+)\.mod/\1/"
-        #     grub-install --target=x86_64-efi --efi-directory="$esp_mount_point" --bootloader-id="$bootloader_id" -modules="normal test efi_gop efi_uga search echo linux all_video gfxmenu gfxterm_background gfxterm_menu gfxterm loadenv configfile tpm" && echo "Done."
-        #     # grub-install --uefi-secure-boot
-        # else
-        #     echo "Abort."
-        # fi
+        #echo "Not implemented yet. Install manually or disable Secure Boot."
+        read -p "Install GRUB [y/N]? " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            # To list all available modules:
+            # find /boot/grub -name "*.mod" | sed -E "s/.*\/(.+)\.mod/\1/"
+            # Just... load all modules that I can find? It will probably be big, but it will hopefully work?
+            GRUB_MODULES="acpi adler32 affs afs afsplitter ahci all_video aout appleldr archelp ata at_keyboard backtrace bfs bitmap bitmap_scale bli blocklist boot boottime bsd bswap_test btrfs bufio cacheinfo cat cbfs cbls cbmemc cbtable cbtime chain cmdline_cat_test cmp cmp_test configfile cpio cpio_be cpuid crc64 crypto cryptodisk cs5536 ctz_test date datehook datetime disk diskfilter div div_test dm_nv echo efifwsetup efi_gop efinet efitextmode efi_uga ehci elf eval exfat exfctest ext2 extcmd f2fs fat file fixvideo font fshelp functional_test gcry_algorithm gcry_arcfour gcry_blowfish gcry_camellia gcry_cast5 gcry_crc gcry_des gcry_dsa gcry_idea gcry_md4 gcry_md5 gcry_rfc2268 gcry_rijndael gcry_rmd160 gcry_rsa gcry_seed gcry_serpent gcry_sha1 gcry_sha256 gcry_sha512 gcry_tiger gcry_twofish gcry_whirlpool geli gettext gfxmenu gfxterm gfxterm_background gfxterm_menu gptsync gzio halt hashsum hdparm hello help hexdump hfs hfsplus hfspluscomp http iorw iso9660 jfs jpeg json keylayouts keystatus ldm legacycfg legacy_password_test linux linux16 loadbios loadenv loopback ls lsacpi lsefi lsefimmap lsefisystab lsmmap lspci lssal luks luks2 lvm lzopio macbless macho mdraid09 mdraid09_be mdraid1x memdisk memrw minicmd minix minix2 minix2_be minix3 minix3_be minix_be mmap morse mpi msdospart mul_test multiboot multiboot2 nativedisk net newc nilfs2 normal ntfs ntfscomp odc offsetio ohci part_acorn part_amiga part_apple part_bsd part_dfly part_dvh part_gpt part_msdos part_plan part_sun part_sunpc parttool password password_pbkdf2 pata pbkdf2 pbkdf2_test pcidump pgp plainmount play png priority_queue probe procfs progress raid5rec raid6rec random rdmsr read reboot regexp reiserfs relocator romfs scsi search search_fs_file search_fs_uuid search_label serial setjmp setjmp_test setpci sfs shift_test signature_test sleep sleep_test smbios spkmodem squash4 strtoull_test syslinuxcfg tar terminal terminfo test test_blockarg testload testspeed tftp tga time tpm tr trig true udf ufs1 ufs1_be ufs2 uhci usb usb_keyboard usbms usbserial_common usbserial_ftdi usbserial_pl2303 usbserial_usbdebug usbtest video video_bochs video_cirrus video_colors video_fb videoinfo videotest videotest_checksum wrmsr xfs xnu xnu_uuid xnu_uuid_test xzio zfs zfscrypt zfsinfo zstd"
+            grub-install --target=x86_64-efi --efi-directory="$esp_mount_point" --bootloader-id="$bootloader_id" -modules="${GRUB_MODULES}" && echo "Done."
+            # grub-install --uefi-secure-boot
+        else
+            echo "Abort."
+        fi
     else
         echo "Detected EFI"
         echo "ESP mount point: $esp_mount_point"
@@ -128,7 +131,8 @@ else
     read -p "Install GRUB [y/N]? " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        grub-install --target=i386-pc "$mbr_block_device" && echo "Done."
+        grub-install --target=i386-pc --recheck "$mbr_block_device" && echo "Done."
+        # --boot-directory=/boot
     else
         echo "Abort."
     fi
