@@ -1,9 +1,10 @@
 #!/bin/bash
 
+path="/usr/share/applications"
 if [ "$EUID" -ne 0 ]; then
-    echo "Run as root."
-    exit 1
+    path="$HOME/.local/share/applications"
 fi
+echo "Using path $path"
 
 function no-display {
     # If the file exists and doesn't contain "NoDisplay=":
@@ -13,7 +14,6 @@ function no-display {
     fi
 }
 
-path="/usr/share/applications"
 no-display "$path/stoken-gui.desktop" # Software Token
 no-display "$path/stoken-gui-small.desktop" # Software Token (small)
 no-display "$path/qv4l2.desktop" # Qt V4L2 test Utility
@@ -53,4 +53,11 @@ no-display "$path/ranger.desktop"
 no-display "$path/scim-setup.desktop"
 no-display "$path/vim.desktop"
 
+# Remove Steam desktop files:
+grep -Ril "steam://run" "$path" | while read f; do
+    rm -v "$f"
+done
+
 update-desktop-database "$path"
+
+echo "Done."
