@@ -39,3 +39,4 @@ create-shortcut "$FolderPath\Textdienste und Eingabesprachen.lnk" "C:\Windows\Sy
 create-shortcut "$FolderPath\Themes.lnk" "C:\Windows\Resources\Themes"
 create-shortcut "$FolderPath\Umgebungsvariablen.lnk" "C:\Windows\System32\rundll32.exe" "sysdm.cpl,EditEnvironmentVariables"
 create-shortcut "$FolderPath\Leistungsoptionen.lnk" "C:\Windows\System32\SystemPropertiesPerformance.exe"
+create-shortcut "$FolderPath\Desktopsymboleinstellunen.lnk" "C:\Windows\System32\control.exe" "desk.cpl,,0"
