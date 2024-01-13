@@ -41,6 +41,7 @@ no-display "$path/cleanup-manjaro-gnome.desktop"
 no-display "$path/hp-uiscan.desktop"
 # Misc:
 no-display "$path/electron25.desktop"
+no-display "$path/electron28.desktop"
 no-display "$path/cmake-gui.desktop"
 no-display "$path/xdvi.desktop"
 no-display "$path/xgps.desktop"
