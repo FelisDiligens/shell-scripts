@@ -2,6 +2,7 @@
 
 path="/usr/share/applications"
 if [ "$EUID" -ne 0 ]; then
+    echo "Warning: Not running as root."
     path="$HOME/.local/share/applications"
 fi
 echo "Using path $path"
@@ -24,7 +25,7 @@ no-display "$path/yad-settings.desktop" # YAD settings
 no-display "$path/avahi-discover.desktop" # Avahi Zeroconf Browser
 no-display "$path/bssh.desktop" # Avahi SSH Server Browser
 no-display "$path/bvnc.desktop" # Avahi VNC Server Browser
-no-display "$path/xterm.desktop" # XTerm (good ol' reliable?), dependency for EOS stuff
+no-display "$path/xterm.desktop" # XTerm (good ol' reliable?), dependency for EndeavourOS stuff
 no-display "$path/uxterm.desktop" # UXTerm
 no-display "$path/cups.desktop" # Manage Printing
 # no-display "$path/pavucontrol.desktop" # PulseAudio volume control
@@ -53,12 +54,17 @@ no-display "$path/scrcpy-console.desktop"
 no-display "$path/ranger.desktop"
 no-display "$path/scim-setup.desktop"
 no-display "$path/vim.desktop"
+no-display "$path/gsharp.desktop" # C# InteractiveBase Shell - from package mono-tools
 
 # Remove Steam desktop files:
-grep -Ril "steam://run" "$path" | while read f; do
+grep -Ril "steam://run" "$path" | while read -r f; do
     rm -v "$f"
 done
 
 update-desktop-database "$path"
+
+if [ "$XDG_CURRENT_DESKTOP" = "KDE" ]; then
+    kbuildsycoca5
+fi
 
 echo "Done."
