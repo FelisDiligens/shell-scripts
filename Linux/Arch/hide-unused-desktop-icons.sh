@@ -55,6 +55,7 @@ no-display "$path/ranger.desktop"
 no-display "$path/scim-setup.desktop"
 no-display "$path/vim.desktop"
 no-display "$path/gsharp.desktop" # C# InteractiveBase Shell - from package mono-tools
+no-display "$path/xsane.desktop"
 
 # Remove Steam desktop files:
 grep -Ril "steam://run" "$path" | while read -r f; do
