@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# A script for the Arch Linux Updates Indicator GNOME extension
+# to detect package type (pacman, AUR, flatpak) and repo (Arch, EndeavourOS), and
+# open the appropriate URL in the default webbrowser.
+
+# Below:
+#     Command to show info for a package (optional)
+# change the line:
+#     xdg-open https://www.archlinux.org/packages/%2$s/%3$s/%1$s
+# to:
+#     arch-update-package-info "%1$s" "%2$s" "%3$s"
+
+PACKAGE_NAME="$1"
+REPO="$2"
+ARCH="$3"
+
+if [ "$REPO" = "REPO" ] && [ "$ARCH" = "ARCH" ]; then
+    # Not found with `pacman -Si`:
+    if yay -Si $PACKAGE_NAME; then
+        xdg-open "https://aur.archlinux.org/packages/${PACKAGE_NAME}"
+    elif flatpak info $PACKAGE_NAME; then
+        xdg-open "https://flathub.org/apps/${PACKAGE_NAME}"
+    fi
+elif [ -n "$REPO" ] && [ -n "$ARCH" ]; then
+    if [ "$REPO" = "endeavouros" ]; then
+        # Not sure where to link to...
+        # A few packages have README.md files, but not all of them.
+        xdg-open "https://github.com/endeavouros-team/PKGBUILDS/tree/master/${PACKAGE_NAME}"
+    else
+        xdg-open "https://www.archlinux.org/packages/${REPO}/${ARCH}/${PACKAGE_NAME}"
+    fi
+else
+    zenity --error --text="Package can't be looked up"
+fi

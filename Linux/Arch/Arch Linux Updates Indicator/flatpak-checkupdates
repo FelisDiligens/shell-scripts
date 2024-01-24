@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# A script for the Arch Linux Updates Indicator GNOME extension
+# to print updates for flatpak packages in the same way as `checkupdates` does.
+# Example: "com.discordapp.Discord 0.0.40 -> 0.0.41"
+
+# Below:
+#     Command to check for updates
+# change the line:
+#     /usr/bin/checkupdates
+# to:
+#     /bin/sh -c "(checkupdates; yay -Qu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1; flatpak-checkupdates"
+
+flatpak remote-ls --columns=application,version --updates | tail -n +1 | while read -r line; do
+    app_ref=$(echo $line | tr -s ' ' | cut -d ' ' -f 1)
+    local_version=$(echo $line | tr -s ' ' | cut -d ' ' -f 2)
+    if [ -n "$app_ref" ] && [ -n "$local_version" ]; then
+        xml=$(curl -s "https://raw.githubusercontent.com/flathub/${app_ref}/master/${app_ref}.metainfo.xml")
+        if [ -z "$xml" ] || [ "$xml" = "404: Not Found" ]; then
+            xml=$(curl -s "https://raw.githubusercontent.com/flathub/${app_ref}/master/${app_ref}.appdata.xml")
+        fi
+        remote_version=$(echo "$xml" | grep -P '<release.*version=".*?"' | head -n 1 | grep -o -P 'version=".*?"' | sed 's/^version="//' | sed 's/"$//')
+        echo "${app_ref} ${local_version} -> ${remote_version}"
+    fi
+done
