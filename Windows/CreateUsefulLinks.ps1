@@ -41,3 +41,5 @@ create-shortcut "$FolderPath\Umgebungsvariablen.lnk" "C:\Windows\System32\rundll
 create-shortcut "$FolderPath\Leistungsoptionen.lnk" "C:\Windows\System32\SystemPropertiesPerformance.exe"
 create-shortcut "$FolderPath\Desktopsymboleinstellunen.lnk" "C:\Windows\System32\control.exe" "desk.cpl,,0"
 create-shortcut "$FolderPath\Programme und Features.lnk" "C:\Windows\System32\appwiz.cpl" # Programs and Features
+create-shortcut "$FolderPath\Internetoptionen.lnk" "C:\Windows\System32\inetcpl.cpl" # Internet Options
+create-shortcut "$FolderPath\Systemeigenschaften.lnk" "C:\Windows\System32\sysdm.cpl" # System Properties
