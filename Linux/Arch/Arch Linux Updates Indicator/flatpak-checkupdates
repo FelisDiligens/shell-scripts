@@ -12,6 +12,10 @@
 #     /bin/sh -c "(checkupdates; yay -Qu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1; flatpak-checkupdates"
 
 flatpak remote-ls --columns=application,version --updates | tail -n +1 | while read -r line; do
+    # Line has to have application and version (with tab in between)
+    if ! { echo "$line" | grep -P '\t' &>/dev/null; }; then
+        continue
+    fi
     app_ref=$(echo $line | tr -s ' ' | cut -d ' ' -f 1)
     local_version=$(echo $line | tr -s ' ' | cut -d ' ' -f 2)
     if [ -n "$app_ref" ] && [ -n "$local_version" ]; then
@@ -20,6 +24,9 @@ flatpak remote-ls --columns=application,version --updates | tail -n +1 | while r
             xml=$(curl -s "https://raw.githubusercontent.com/flathub/${app_ref}/master/${app_ref}.appdata.xml")
         fi
         remote_version=$(echo "$xml" | grep -P '<release.*version=".*?"' | head -n 1 | grep -o -P 'version=".*?"' | sed 's/^version="//' | sed 's/"$//')
+        if [ -z "$remote_version" ]; then
+            remote_version="unknown"
+        fi
         echo "${app_ref} ${local_version} -> ${remote_version}"
     fi
 done
