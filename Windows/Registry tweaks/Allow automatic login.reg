@@ -1,0 +1,7 @@
+Windows Registry Editor Version 5.00
+
+; This only allows automatic login
+; You still have to open `netplwiz` and enable it
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Passwordless\Device]
+"DevicePasswordLessBuildVersion"=dword:00000000
