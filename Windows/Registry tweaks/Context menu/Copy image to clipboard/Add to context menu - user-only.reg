@@ -7,6 +7,6 @@ Windows Registry Editor Version 5.00
 ; @="Bild in die Zwischenablage kopieren"
 
 [HKEY_CURRENT_USER\SOFTWARE\Classes\*\shell\CopyImageToClipboard\command]
-@="\"C:\\Users\\you\\scoop\\apps\\nircmd\\current\\nircmdc.exe\" clipboard copyimage \"%1\""
+@="\"C:\\Users\\USERNAME\\scoop\\apps\\nircmd\\current\\nircmdc.exe\" clipboard copyimage \"%1\""
 ; @="\"C:\\nircmd\\nircmdc.exe\" clipboard copyimage \"%1\""
 ; @="powershell.exe -windowstyle hidden -Command \"Add-Type -AssemblyName System.Windows.Forms; [Windows.Forms.Clipboard]::SetImage($([System.Drawing.Image]::Fromfile(\\\"%1\\\")))\""

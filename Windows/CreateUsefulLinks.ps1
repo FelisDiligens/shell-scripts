@@ -39,13 +39,12 @@ create-shortcut "$FolderPath\Textdienste und Eingabesprachen.lnk" "C:\Windows\Sy
 create-shortcut "$FolderPath\Themes.lnk" "C:\Windows\Resources\Themes"
 create-shortcut "$FolderPath\Umgebungsvariablen.lnk" "C:\Windows\System32\rundll32.exe" "sysdm.cpl,EditEnvironmentVariables"
 create-shortcut "$FolderPath\Leistungsoptionen.lnk" "C:\Windows\System32\SystemPropertiesPerformance.exe"
-create-shortcut "$FolderPath\Desktopsymboleinstellunen.lnk" "C:\Windows\System32\control.exe" "desk.cpl,,0"
+create-shortcut "$FolderPath\Desktopsymboleinstellungen.lnk" "C:\Windows\System32\control.exe" "desk.cpl,,0"
 create-shortcut "$FolderPath\Programme und Features.lnk" "C:\Windows\System32\appwiz.cpl" # Programs and Features
 create-shortcut "$FolderPath\Internetoptionen.lnk" "C:\Windows\System32\inetcpl.cpl" # Internet Options
 create-shortcut "$FolderPath\Systemeigenschaften.lnk" "C:\Windows\System32\sysdm.cpl" # System Properties
-create-shortcut "$FolderPath\Sticky Keys.lnk" "C:\Windows\explorer.exe" "Shell:::{D555645E-D4F8-4c29-A827-D93C859C4F2A}\pageStickyKeysSettings" # TODO
+create-shortcut "$FolderPath\Einrastfunktion einrichten (Sticky Keys).lnk" "C:\Windows\explorer.exe" "Shell:::{D555645E-D4F8-4c29-A827-D93C859C4F2A}\pageStickyKeysSettings" # Setup Sticky Keys
 create-shortcut "$FolderPath\Geräte-Manager.lnk" "C:\Windows\System32\devmgmt.msc"
-create-shortcut "$FolderPath\Desktop-Hintergrund.lnk" "C:\Windows\explorer.exe" "Shell:::{ED834ED6-4B5A-4bfe-8F11-A626DCB6A921}\pageWallpaper" # TODO
-create-shortcut "$FolderPath\Font-Einstellungen.lnk" "C:\Windows\explorer.exe" "Shell:::{93412589-74D4-4E4E-AD0E-E0CB621440FD}" # TODO
-create-shortcut "$FolderPath\Windows Firewall.lnk" "C:\Windows\System32\Firewall.cpl" # TODO
-create-shortcut "$FolderPath\Windows Features.lnk" "C:\Windows\System32\OptionalFeatures.exe" # TODO
+create-shortcut "$FolderPath\Windows Defender Firewall.lnk" "C:\Windows\System32\Firewall.cpl"
+create-shortcut "$FolderPath\Windows Defender Firewall mit erweiterter Sicherheit.lnk" "C:\Windows\system32\WF.msc" # Windows Defender Firewall with Advanced Security
+create-shortcut "$FolderPath\Windows-Features.lnk" "C:\Windows\System32\OptionalFeatures.exe" # Windows Features
