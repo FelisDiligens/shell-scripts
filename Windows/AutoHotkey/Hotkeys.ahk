@@ -112,20 +112,46 @@ WheelDown::
 }
 #HotIf ; end
 
-; Implement hot corners
-SetTimer(ProcessHotCorner, 50)
+; Implement hot corners (with cursor velocity)
+CoordMode("Mouse", "Screen") ; mouse position on desktop
+CursorVelocity := 0
+MouseGetPos(&LastMouseX, &LastMouseY)
+HOT_CORNER_CHECK_INTERVAL_MILLIS := 50 ; Time in milliseconds between checks
+TOLERANCE := 5 ; Tolerance in pixels (how far away from the corner the cursor is allowed to be before triggering)
+THRESHOLD_VELOCITY := 1000 ; Minimum cursor velocity in pixels per second
+SetTimer(ProcessHotCorner, HOT_CORNER_CHECK_INTERVAL_MILLIS)
 ProcessHotCorner()
 {
+    global CursorVelocity, LastMouseX, LastMouseY
     CoordMode("Mouse", "Screen") ; mouse position on desktop
     MouseGetPos(&MouseX, &MouseY)
 
-    for Monitor in Monitors
-    {
-        if Abs(MouseX - Monitor.x) <= TOLERANCE &&
-           Abs(MouseY - Monitor.y) <= TOLERANCE
+    ; avg: (v₁ + v₂) / 2
+    CursorVelocity := (
+        CursorVelocity +
+        ; c = √(a² + b²)
+        Sqrt(
+            Abs(MouseX - LastMouseX) ** 2 + ; a = |A_x - B_x|
+            Abs(MouseY - LastMouseY) ** 2   ; b = |A_y - B_y|
+        ) / (HOT_CORNER_CHECK_INTERVAL_MILLIS / 1000) ; speed = distance / time
+    ) / 2
+
+    LastMouseX := MouseX
+    LastMouseY := MouseY
+
+    if CursorVelocity >= THRESHOLD_VELOCITY {
+        for Monitor in Monitors
         {
-            ToggleTaskView()
-            Sleep 1000 ; prevent hot corner from triggering in a loop
+            if Abs(MouseX - Monitor.x) <= TOLERANCE &&
+               Abs(MouseY - Monitor.y) <= TOLERANCE
+            {
+                ToggleTaskView()
+                
+                ; prevent hot corner from triggering in a loop:
+                CursorVelocity := 0
+                Sleep HOT_CORNER_CHECK_INTERVAL_MILLIS * 2
+                return
+            }
         }
     }
 }
@@ -237,4 +263,3 @@ GetMonitors()
 }
 
 Monitors := GetMonitors()
-TOLERANCE := 5 ; Tolerance in pixels
