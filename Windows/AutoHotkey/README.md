@@ -1,7 +1,7 @@
 # My AutoHotkey script
 
-> [!info]
-> This script requires AutoHotkey v2!
+> [!IMPORTANT]
+> This script requires AutoHotkey v2
 
 The hotkeys are inspired by GNOME/Linux.
 
