@@ -13,7 +13,7 @@ The hotkeys are inspired by GNOME/Linux.
 - `Super` to open Task View
 - Double-press `Super` to open Start Menu
 - Move cursor to the top left to open Task View.  
-  Cursor has to move a certain speed to prevent accidentally triggering the hot corner.  
+  Cursor has to move a certain speed (and in the top left direction) to prevent accidentally triggering the hot corner.  
   (Works with multiple monitors, too!)
 - Use the scroll wheel in Task View to switch between Virtual Desktops.  
   (You may need to edit the script for that, depending on your system language)
