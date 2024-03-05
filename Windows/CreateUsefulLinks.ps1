@@ -44,7 +44,8 @@ create-shortcut "$FolderPath\Programme und Features.lnk" "C:\Windows\System32\ap
 create-shortcut "$FolderPath\Internetoptionen.lnk" "C:\Windows\System32\inetcpl.cpl" # Internet Options
 create-shortcut "$FolderPath\Systemeigenschaften.lnk" "C:\Windows\System32\sysdm.cpl" # System Properties
 create-shortcut "$FolderPath\Einrastfunktion einrichten (Sticky Keys).lnk" "C:\Windows\explorer.exe" "Shell:::{D555645E-D4F8-4c29-A827-D93C859C4F2A}\pageStickyKeysSettings" # Setup Sticky Keys
-create-shortcut "$FolderPath\Geräte-Manager.lnk" "C:\Windows\System32\devmgmt.msc"
+create-shortcut "$FolderPath\Geräte-Manager.lnk" "C:\Windows\System32\devmgmt.msc" # Device Manager
+create-shortcut "$FolderPath\Datenträgerverwaltung.lnk" "C:\Windows\System32\diskmgmt.msc" # Disk Management
 create-shortcut "$FolderPath\Windows Defender Firewall.lnk" "C:\Windows\System32\Firewall.cpl"
 create-shortcut "$FolderPath\Windows Defender Firewall mit erweiterter Sicherheit.lnk" "C:\Windows\system32\WF.msc" # Windows Defender Firewall with Advanced Security
 create-shortcut "$FolderPath\Windows-Features.lnk" "C:\Windows\System32\OptionalFeatures.exe" # Windows Features
