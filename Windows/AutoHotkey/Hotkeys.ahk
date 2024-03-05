@@ -52,30 +52,38 @@ MButton::
 ; Single pressing left Windows key opens Task View,
 ; double pressing left Windows key opens Start Menu,
 ; but allow programs like AltSnap to run
-$LWin::
-{
-    ; Double-pressing opens the start menu:
-    if (A_PriorHotkey == "$LWin" and A_TimeSincePriorHotkey < 400)
-    {
-        SetTimer(ToggleTaskView, 0) ; disable/stop the timeout
-        ToggleStartMenu()
-        return
-    }
+;;; Sadly, this just doesn't work well.
+; $LWin::
+; {
+;     ; Double-pressing opens the start menu:
+;     if (A_PriorHotkey == "$LWin" and A_TimeSincePriorHotkey < 400)
+;     {
+;         SetTimer(ToggleTaskView, 0) ; disable/stop the timeout
+;         ToggleStartMenu()
+;         return
+;     }
     
-    ; Allow programs like AltSnap to work while KeyWait is running...
-    Send "{LWin down}"
+;     ; Allow programs like AltSnap to work while KeyWait is running...
+;     Send "{LWin down}"
 
-    ; Only open task view if pressed shortly (not held down):
-    if KeyWait("LWin", "T 0.2") {
-        SetTimer(ToggleTaskView, -200) ; open Task View in 200ms, unless LWin is pressed again
-    } else {
-        KeyWait("LWin") ; If timed out, we still need to wait for the key to be released by the user.
-    }
+;     ; Only open task view if pressed shortly (not held down):
+;     if KeyWait("LWin", "T 0.2") {
+;         SetTimer(ToggleTaskView, -200) ; open Task View in 200ms, unless LWin is pressed again
+;     } else {
+;         KeyWait("LWin") ; If timed out, we still need to wait for the key to be released by the user.
+;     }
 
-    ; Release key, but prevent start menu from opening, see:
-    ; https://stackoverflow.com/questions/69143107/how-to-disable-the-win-key-if-its-the-only-key-being-pressed-using-autohotkey
-    Send "{Blind}{vkE8}" 
-    Send "{LWin up}"
+;     ; Release key, but prevent start menu from opening, see:
+;     ; https://stackoverflow.com/questions/69143107/how-to-disable-the-win-key-if-its-the-only-key-being-pressed-using-autohotkey
+;     Send "{Blind}{vkE8}" 
+;     Send "{LWin up}"
+; }
+
+; Make the application/menu key open the task view:
+; (never really used the key before)
+AppsKey::
+{
+    ToggleTaskView()
 }
 
 ToggleTaskView()
