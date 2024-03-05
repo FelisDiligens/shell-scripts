@@ -134,15 +134,20 @@ ProcessHotCorner()
     CoordMode("Mouse", "Screen") ; mouse position on desktop
     MouseGetPos(&MouseX, &MouseY)
 
-    ; avg: (v₁ + v₂) / 2
-    CursorVelocity := (
-        CursorVelocity +
-        ; c = √(a² + b²)
-        Sqrt(
-            Abs(MouseX - LastMouseX) ** 2 + ; a = |A_x - B_x|
-            Abs(MouseY - LastMouseY) ** 2   ; b = |A_y - B_y|
-        ) / (HOT_CORNER_CHECK_INTERVAL_MILLIS / 1000) ; speed = distance / time
-    ) / 2
+    ; Only count velocity in direction up and left:
+    if LastMouseX - MouseX >= 0 && LastMouseY - MouseY >= 0 {
+        ; avg: (v₁ + v₂) / 2
+        CursorVelocity := (
+            CursorVelocity +
+            ; c = √(a² + b²)
+            Sqrt(
+                Abs(MouseX - LastMouseX) ** 2 + ; a = |A_x - B_x|
+                Abs(MouseY - LastMouseY) ** 2   ; b = |A_y - B_y|
+            ) / (HOT_CORNER_CHECK_INTERVAL_MILLIS / 1000) ; speed = distance / time
+        ) / 2
+    } else {
+        CursorVelocity /= 2
+    }
 
     LastMouseX := MouseX
     LastMouseY := MouseY
