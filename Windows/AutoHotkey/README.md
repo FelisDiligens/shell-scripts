@@ -8,10 +8,12 @@ The hotkeys are inspired by GNOME/Linux.
 ## Features
 
 - `Ctrl`+`H` to toggle hidden files in Windows Explorer
-- Middle mouse button to paste text in Windows Terminal
+- Middle mouse button to paste text in Windows Terminal.  
+  (Middle clicking the tab to close it still works)
 - `Ctrl`+`Alt`+`T` to open Windows Terminal (global or scoop version)
-- `Super` to open Task View
-- Double-press `Super` to open Start Menu
+- _`Super` to open Task View_ (commented out)
+- _Double-press `Super` to open Start Menu_ (commented out)
+- Application/Menu key to open Task View
 - Move cursor to the top left to open Task View.  
   Cursor has to move a certain speed (and in the top left direction) to prevent accidentally triggering the hot corner.  
   (Works with multiple monitors, too!)
