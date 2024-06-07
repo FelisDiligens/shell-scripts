@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# https://stackoverflow.com/a/73101107
+OPENWITH="OpenWith.exe"
+
+open_files() {
+    # For each "newline-delimited URI for selected file":
+    echo "$NAUTILUS_SCRIPT_SELECTED_URIS" | while read f; do
+        # Skip empty lines:
+        if [ -z "$f" ]; then
+            continue
+        fi
+        # Convert the URI to a file path:
+        path=$(echo "$f" | sed -e 's/%/\\x/g' -e 's_^file://__' | xargs -0 printf "%b")
+        # Convert the Unix file path to a Windows file path:
+        windows_path=$(wslpath -w "${path}")
+        # Print to pass it via stdout to xargs:
+        echo "${windows_path}"
+    # Pass each file path to the specified command using `xargs`:
+    done | xargs -d$'\n' $OPENWITH
+}
+
+open_folder() {
+    # Convert the URI to a file path (https://stackoverflow.com/a/40644461):
+    current_path=$(echo "$NAUTILUS_SCRIPT_CURRENT_URI" | sed -e 's/%/\\x/g' -e 's_^file://__' | xargs -0 printf "%b")
+    # Convert the Unix file path to a Windows file path:
+    windows_path=$(wslpath -w "${current_path}")
+    # Open the folder with the specified command:
+    $OPENWITH "${windows_path}"
+}
+
+# If files are selected then open them, otherwise open the currently open folder:
+if [ -n "$NAUTILUS_SCRIPT_SELECTED_URIS" ]; then
+    open_files
+else
+    open_folder
+fi

@@ -1,0 +1,22 @@
+Windows Registry Editor Version 5.00
+; Make sure to:
+; -> replace "USERNAME" with your user name
+; -> replace "-d Debian" with "-> YourDistroName"
+; -> replace "HKEY_CURRENT_USER\Software\Classes" by "HKEY_CLASSES_ROOT" if you want to register these context menus system-wide
+; -> install nemo and wslu in your distro
+; -> run wslu's wslusc at least once to generate necessary files
+
+; This will make it appear when you right click ON a folder
+; The "Icon" line can be removed if you don't want the icon to appear
+[HKEY_CURRENT_USER\Software\Classes\Directory\shell\WSLGNOMETerm]
+@="Open in GNOME Terminal"
+"Icon"="\"C:\\Users\\USERNAME\\wslu\\org.gnome.Terminal.ico\",0"
+[HKEY_CURRENT_USER\Software\Classes\Directory\shell\WSLGNOMETerm\command]
+@="\"C:\\Windows\\System32\\wscript.exe\" \"C:\\Users\\USERNAME\\wslu\\runHidden.vbs\" \"C:\\Windows\\system32\\wsl.exe\" -d Debian /usr/bin/gnome-terminal \"$(wslpath -u \"\"%1\"\")\""
+; This will make it appear when you right click INSIDE a folder
+; The "Icon" line can be removed if you don't want the icon to appear
+[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\WSLGNOMETerm]
+@="Open in GNOME Terminal"
+"Icon"="\"C:\\Users\\USERNAME\\wslu\\org.gnome.Terminal.ico\",0"
+[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\WSLGNOMETerm\command]
+@="\"C:\\Windows\\System32\\wscript.exe\" \"C:\\Users\\USERNAME\\wslu\\runHidden.vbs\" \"C:\\Windows\\system32\\wsl.exe\" -d Debian /usr/bin/gnome-terminal \"$(wslpath -u \"\"%V\"\")\""

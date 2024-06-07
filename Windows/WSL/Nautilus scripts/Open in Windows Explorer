@@ -1,0 +1,4 @@
+#!/bin/bash
+# https://stackoverflow.com/a/40644461
+current_path=$(echo "$NAUTILUS_SCRIPT_CURRENT_URI" | sed -e 's/%/\\x/g' -e 's_^file://__' | xargs -0 printf "%b")
+explorer.exe "$(wslpath -w "${current_path}")"
