@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Open with default app
+Name[de]=Öffnen mit Standardanwendung
+Icon=windows
+Exec=/usr/local/bin/open-with-windows-default-app.sh %U
+Terminal=false
+Type=Application
+Categories=Utility;
+MimeType=x-scheme-handler/file
