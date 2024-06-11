@@ -39,6 +39,7 @@ create-shortcut "$FolderPath\Textdienste und Eingabesprachen.lnk" "C:\Windows\Sy
 create-shortcut "$FolderPath\Themes.lnk" "C:\Windows\Resources\Themes"
 create-shortcut "$FolderPath\Umgebungsvariablen.lnk" "C:\Windows\System32\rundll32.exe" "sysdm.cpl,EditEnvironmentVariables"
 create-shortcut "$FolderPath\Leistungsoptionen.lnk" "C:\Windows\System32\SystemPropertiesPerformance.exe"
+create-shortcut "$FolderPath\Energieeinstellungen.lnk" "C:\Windows\explorer.exe" "Shell:::{025A5937-A6BE-4686-A844-36FE4BEC8B6D}" # Power Options
 create-shortcut "$FolderPath\Desktopsymboleinstellungen.lnk" "C:\Windows\System32\control.exe" "desk.cpl,,0"
 create-shortcut "$FolderPath\Programme und Features.lnk" "C:\Windows\System32\appwiz.cpl" # Programs and Features
 create-shortcut "$FolderPath\Internetoptionen.lnk" "C:\Windows\System32\inetcpl.cpl" # Internet Options
@@ -49,3 +50,5 @@ create-shortcut "$FolderPath\Datenträgerverwaltung.lnk" "C:\Windows\System32\di
 create-shortcut "$FolderPath\Windows Defender Firewall.lnk" "C:\Windows\System32\Firewall.cpl"
 create-shortcut "$FolderPath\Windows Defender Firewall mit erweiterter Sicherheit.lnk" "C:\Windows\system32\WF.msc" # Windows Defender Firewall with Advanced Security
 create-shortcut "$FolderPath\Windows-Features.lnk" "C:\Windows\System32\OptionalFeatures.exe" # Windows Features
+
+# More shell CLSIDs: https://www.tenforums.com/tutorials/3123-clsid-key-guid-shortcuts-list-windows-10-a.html
