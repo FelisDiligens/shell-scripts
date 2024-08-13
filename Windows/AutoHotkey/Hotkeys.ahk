@@ -1,3 +1,5 @@
+#Requires AutoHotkey v2.0
+
 ; Ctrl+H to toggle hidden files in Windows Explorer
 #HotIf WinExist("ahk_exe Explorer.EXE") and WinActive("ahk_exe Explorer.EXE")
 ^h::
@@ -97,6 +99,10 @@ ToggleStartMenu()
     Send "{LWin}" ; LWin
 }
 
+; Invert mouse wheel scroll (also called "natural scrolling")
+; WheelUp::WheelDown
+; WheelDown::WheelUp
+
 ; There doesn't seem to be a better way of detecting the Task View yet:
 #HotIf (WinActive("ahk_class XamlExplorerHostIslandWindow") or ; class name on Windows 11
         WinActive("ahk_class Windows.UI.Core.CoreWindow")) and ; class name on Windows 10
@@ -131,6 +137,13 @@ SetTimer(ProcessHotCorner, HOT_CORNER_CHECK_INTERVAL_MILLIS)
 ProcessHotCorner()
 {
     global CursorVelocity, LastMouseX, LastMouseY
+
+    ; Disable Hot Corner processing when in VM windows
+    if WinActive("ahk_exe VirtualBoxVM.exe")
+    {
+        return
+    }
+
     CoordMode("Mouse", "Screen") ; mouse position on desktop
     MouseGetPos(&MouseX, &MouseY)
 
