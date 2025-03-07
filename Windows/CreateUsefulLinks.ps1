@@ -43,6 +43,9 @@ create-shortcut "$FolderPath\Energieeinstellungen.lnk" "C:\Windows\explorer.exe"
 create-shortcut "$FolderPath\Desktopsymboleinstellungen.lnk" "C:\Windows\System32\control.exe" "desk.cpl,,0"
 create-shortcut "$FolderPath\Programme und Features.lnk" "C:\Windows\System32\appwiz.cpl" # Programs and Features
 create-shortcut "$FolderPath\Internetoptionen.lnk" "C:\Windows\System32\inetcpl.cpl" # Internet Options
+create-shortcut "$FolderPath\Netzwerkverbindungen.lnk" "C:\Windows\explorer.exe" "Shell:::{7007ACC7-3202-11D1-AAD2-00805FC1270E}" # Network Connections
+create-shortcut "$FolderPath\Region.lnk" "C:\Windows\explorer.exe" "Shell:::{62D8ED13-C9D0-4CE8-A914-47DD628FB1B0}" # Region
+create-shortcut "$FolderPath\Datum und Uhrzeit.lnk" "C:\Windows\explorer.exe" "Shell:::{E2E7934B-DCE5-43C4-9576-7FE4F75E7480}" # Date and Time
 create-shortcut "$FolderPath\Systemeigenschaften.lnk" "C:\Windows\System32\sysdm.cpl" # System Properties
 create-shortcut "$FolderPath\Einrastfunktion einrichten (Sticky Keys).lnk" "C:\Windows\explorer.exe" "Shell:::{D555645E-D4F8-4c29-A827-D93C859C4F2A}\pageStickyKeysSettings" # Setup Sticky Keys
 create-shortcut "$FolderPath\Geräte-Manager.lnk" "C:\Windows\System32\devmgmt.msc" # Device Manager
